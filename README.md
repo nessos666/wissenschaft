@@ -2,11 +2,11 @@
 
 <p align="center">
   <b>Multi-Source Scientific Research Pipeline</b><br>
-  Domain Detection → Parallel Search → Dedup → Rank → Export<br><br>
-  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/sources-30%2B-orange" alt="Sources">
-  <img src="https://img.shields.io/badge/zero%20API%20keys-✅-brightgreen" alt="Zero API Keys">
+  <sub>Domain Detection → Parallel Search → Dedup → Rank → Export</sub><br><br>
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/sources-30+-orange?style=for-the-badge" alt="Sources">
+  <img src="https://img.shields.io/badge/zero_API_keys-✅-brightgreen?style=for-the-badge" alt="Zero API Keys">
 </p>
 
 ---
