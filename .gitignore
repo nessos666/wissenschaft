@@ -1,0 +1,23 @@
+# Dependencies installed via pip
+__pycache__/
+*.pyc
+*.pyo
+
+# Output directories
+output/
+cache/
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
