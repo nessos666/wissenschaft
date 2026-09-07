@@ -49,8 +49,24 @@ class OrchestratorV3:
         if raw_results is None and interne_treffer:
             raw_results = interne_treffer
         
-        # Phase 2: Verifier
-        v_input = {"results": raw_results or []}
+        # Block 5: Dedup VOR Verifier — aus Roh-Treffern Duplikate entfernen
+        # (DOI-Match + Titel-Fuzzy). raw_results sind rohe Dicts.
+        from deduplicator import deduplicate, searchresult_from_dict
+        roh_anzahl = len(raw_results or [])
+        sr_liste = [sr for sr in (searchresult_from_dict(x) for x in (raw_results or []))
+                    if sr is not None]
+        dedupliziert = deduplicate(sr_liste) if sr_liste else []
+        # Deduplizierte zurück in Dicts für Verifier (Pipeline-Vertrag)
+        raw_nach_dedup = [{
+            "title": sr.title, "authors": sr.authors, "year": sr.year,
+            "doi": sr.doi, "url": sr.url, "abstract": sr.abstract,
+            "source": sr.source, "citations": sr.citations,
+            "pdf_url": sr.pdf_url, "is_oa": sr.is_oa,
+        } for sr in dedupliziert]
+        dedup_anzahl = len(raw_nach_dedup)
+        
+        # Phase 2: Verifier (auf deduplizierten Treffern)
+        v_input = {"results": raw_nach_dedup}
         v = self.verifier.run(v_input)
         
         # Phase 3: Evidence Scoring
@@ -62,7 +78,8 @@ class OrchestratorV3:
         for x in (v.data.get("verified_results") or []):
             if isinstance(x, dict):
                 verified_map[x.get("title", "")] = x.get("trust_score", 0.5)
-        for item in (raw_results or []):
+        # Block 5: Evidence auf den DEDUPLIZIERTEN Treffern (raw_nach_dedup)
+        for item in (raw_nach_dedup or []):
             sr = searchresult_from_dict(item)
             if sr is None:
                 continue
@@ -89,27 +106,27 @@ class OrchestratorV3:
             "query": query, "domain": domain,
         })
         
-        # Phase 7: PRISMA
-        total_raw = len(raw_results or [])
-        total_dedup = len(v.data.get("verified_results", []))
+        # Phase 7: PRISMA — Zahlen aus ECHTEN Stufen (Block 5):
+        # identified = Roh-Treffer, screened = nach Dedup, included = final
+        total_raw = roh_anzahl
+        total_dedup = dedup_anzahl
         # Block 3: defensiv — Einträge können Nicht-Dict sein
-        oa_count = sum(1 for x in (raw_results or [])
+        oa_count = sum(1 for x in (raw_nach_dedup or [])
                        if isinstance(x, dict) and x.get("pdf_url"))
         final_count = min(total_dedup, 20)
         prisma_flow = compute_prisma(total_raw, total_dedup, oa_count, final_count)
         prisma_md = generate_prisma_markdown(prisma_flow)
         
-        # Cache speichern
-        if raw_results and use_cache:
-            self.cache.set(query, raw_results, depth,
-                          sources=[x.get("source", "?") for x in raw_results
+        # Cache speichern (deduplizierte Treffer — Block 5)
+        if raw_nach_dedup and use_cache:
+            self.cache.set(query, raw_nach_dedup, depth,
+                          sources=[x.get("source", "?") for x in raw_nach_dedup
                                    if isinstance(x, dict)])
         
         total_ms = (time.time() - t0) * 1000
         
-        # Block 2: Researcher-Ergebnisse + Verifier-Details im Ergebnis führen
-        # (sonst gehen die echten Treffer für Export/Dossier verloren)
-        researcher_results = (raw_results or [])[:20]
+        # Block 2+5: DEDUPLIZIERTE Researcher-Ergebnisse im Ergebnis führen
+        researcher_results = (raw_nach_dedup or [])[:20]
         return {
             "pipeline_success": True,
             "cached": False,
