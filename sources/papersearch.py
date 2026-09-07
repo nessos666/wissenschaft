@@ -40,6 +40,7 @@ from paper_search_mcp.academic_platforms.openaire import OpenAiresearcher as Ope
 from paper_search_mcp.academic_platforms.doaj import DOAJSearcher
 from paper_search_mcp.academic_platforms.citeseerx import CiteSeerXSearcher
 from paper_search_mcp.academic_platforms.core import CORESearcher
+from paper_search_mcp.academic_platforms.iacr import IACRSearcher
 
 # Aktive Quellen. REIHENFOLGE = Qualitäts-Priorität (Fusion-Fix): kuratierte,
 # DOI-basierte Quellen (CrossRef/PubMed/EuropePMC/Semantic…) liefern
@@ -63,6 +64,7 @@ SEARCHER_MAP = {
     "arxiv": ArxivSearcher,
     "biorxiv": BioRxivSearcher,
     "medrxiv": MedRxivSearcher,
+    "iacr": IACRSearcher,  # Kryptographie (Nische — ans Ende)
 }
 ALL_SOURCES = list(SEARCHER_MAP.keys())
 
@@ -190,16 +192,26 @@ def search_papers(query: str, max_results_per_source: int = 3,
     except Exception:
         roh_nach_quelle = {}
 
-    alle_roh = []
+    # Round-Robin-Mischung (Qualitäts-Verbesserung): statt flach zu
+    # konkatenieren (Top-Quellen würden die Liste dominieren — die ersten
+    # max_results wären nur CrossRef/PubMed/EuropePMC), wird je 1 Treffer
+    # pro Quelle gemischt, dann je 2. … — Relevanz (Quellen-Priorität)
+    # UND Vielfalt über alle liefernden Quellen.
     genutzt = []
     fehler = {}
     for q, treffer in roh_nach_quelle.items():
         if treffer:
             genutzt.append(q)
-            alle_roh.extend(treffer)
         else:
             fehler[q] = "keine Treffer/Fehler"
-    papers = _dedupe(alle_roh)  # bereits normiert in _search_eine
+    gemischt = []
+    max_len = max((len(v) for v in roh_nach_quelle.values()), default=0)
+    for i in range(max_len):
+        for q in genutzt:
+            treffer_q = roh_nach_quelle[q]
+            if i < len(treffer_q):
+                gemischt.append(treffer_q[i])
+    papers = _dedupe(gemischt)  # bereits normiert in _search_eine
     return {"query": query, "sources_used": genutzt, "total": len(papers),
             "papers": papers, "errors": fehler}
 

@@ -23,7 +23,7 @@ class ResearcherAgent(BaseAgent):
         try:
             # Block 2: ECHTE Suche — Researcher fragt key-freie APIs direkt ab
             # (statt nur Quellen zu routen). Quelle down → andere liefert.
-            max_results = {"schnell": 3, "standard": 8, "tief": 15}.get(depth, 8)
+            max_results = {"schnell": 5, "standard": 15, "tief": 25}.get(depth, 15)
             from sources.searcher import search as echte_suche
             treffer = echte_suche(query, max_results=max_results)
             
