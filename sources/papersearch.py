@@ -178,7 +178,11 @@ def search_papers(query: str, max_results_per_source: int = 3,
                      _EXECUTOR, _search_eine, SEARCHER_MAP[q], query,
                      max_results_per_source)
                  for q in quellen}
-        pro_quelle_s = min(5.0, timeout_s)
+        # Davids Timeout-Philosophie (2026-09): KEIN aggressives Abschneiden —
+        # langsame Quellen dürfen arbeiten (bis 60s pro Quelle, parallel).
+        # Schnelle Quellen liefern sofort, langsame kommen nach. Teilwissen
+        # ist ok — der Rest fließt in Folgeläufe/Cache.
+        pro_quelle_s = min(60.0, timeout_s)
         ergebnis = {}
         for q, t in tasks.items():
             try:

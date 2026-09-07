@@ -137,13 +137,117 @@ def suche_inspirehep(query: str, max_results: int = 5) -> list:
     return out[:max_results]
 
 
-# ---------- Registry für die Brücke ----------
+# ---------- COD (Crystallography Open Database — Material/Kristalle) ----------
 
+@_kaputt_abfangen
+def suche_cod(query: str, max_results: int = 5) -> list:
+    """Kristallstrukturen (Materialwissenschaft). Nur sinnvoll bei
+    Mineral-/Kristall-Themen (z.B. 'zeolite', 'quartz')."""
+    r = requests.get(
+        "https://www.crystallography.net/cod/result",
+        params={"format": "json", "text": query}, headers=HEADERS,
+        timeout=TIMEOUT)
+    out = []
+    for d in (r.json() if isinstance(r.json(), list) else []):
+        if len(out) >= max_results:
+            break
+        name = d.get("chemname") or d.get("formula") or "Kristall"
+        cod_id = str(d.get("file") or "")
+        out.append({
+            "title": f"{name} (COD {cod_id})",
+            "year": "", "doi": "",
+            "url": f"https://www.crystallography.net/cod/{cod_id}.html" if cod_id else "",
+            "pdf_url": "", "source": "COD",
+            "citations": 0,
+            "abstract": (d.get("mineral") or d.get("formula") or "")[:200],
+            "authors": "",
+        })
+    return out[:max_results]
+
+
+# ---------- Figshare (Forschungsdaten/-artikel, generisch) ----------
+
+@_kaputt_abfangen
+def suche_figshare(query: str, max_results: int = 5) -> list:
+    r = requests.get(
+        "https://api.figshare.com/v2/articles",
+        params={"search_for": query, "page_size": max_results},
+        headers=HEADERS, timeout=TIMEOUT)
+    out = []
+    for d in (r.json() or []):
+        if not isinstance(d, dict):
+            continue
+        title = (d.get("title") or "")[:500]
+        if not title:
+            continue
+        autoren = ", ".join(
+            f"{a.get('first_name', '')} {a.get('last_name', '')}".strip()
+            for a in (d.get("authors") or []) if isinstance(a, dict))[:300]
+        out.append({
+            "title": title,
+            "year": str(d.get("published_date") or "")[:4],
+            "doi": (d.get("doi") or "").replace("https://doi.org/", ""),
+            "url": d.get("url_public_api") or d.get("url_public_html") or "",
+            "pdf_url": "", "source": "Figshare",
+            "citations": int(d.get("metrics", {}).get("total_views") or 0),
+            "abstract": (d.get("description") or "")[:800],
+            "authors": autoren,
+        })
+    return out[:max_results]
+
+
+# ---------- OSF-Preprints (PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv …) ----------
+
+_OSF_NAMEN = {
+    "psyarxiv": "PsyArXiv", "engrxiv": "engrXiv", "eartharxiv": "EarthArXiv",
+    "socarxiv": "SocArXiv", "africarxiv": "AfricArXiv",
+}
+
+# Registry: erst die direkt definierten Quellen, dann OSF-Communities
 EXTRA_QUELLEN = {
     "chemrxiv": suche_chemrxiv,    # Chemie-Preprints
     "datacite": suche_datacite,    # generisch (Forschungsdaten + Paper)
     "inspirehep": suche_inspirehep,  # Hochenergie-Physik
+    "cod": suche_cod,              # Kristalle/Material
+    "figshare": suche_figshare,    # Forschungsdaten/-artikel
 }
+
+
+def _suche_osf_provider(provider: str, label: str):
+    """Factory: Such-Funktion für EINE OSF-Preprint-Community."""
+    @_kaputt_abfangen
+    def suche(query: str, max_results: int = 5) -> list:
+        r = requests.get(
+            "https://api.osf.io/v2/preprints/",
+            params={"filter[provider]": provider,
+                    "filter[title]": query, "page[size]": max_results},
+            headers=HEADERS, timeout=TIMEOUT)
+        out = []
+        for d in (r.json().get("data") or []):
+            att = d.get("attributes") or {}
+            title = (att.get("title") or "")[:500]
+            if not title:
+                continue
+            doi = att.get("doi") or ""
+            out.append({
+                "title": title,
+                "year": (att.get("date_published") or "")[:4],
+                "doi": (doi or "").replace("https://doi.org/", ""),
+                "url": att.get("absolute_url") or (f"https://doi.org/{doi}" if doi else ""),
+                "pdf_url": "", "source": label,
+                "citations": 0,
+                "abstract": "",
+                "authors": "",
+            })
+        return out[:max_results]
+    return suche
+
+
+for _p, _l in _OSF_NAMEN.items():
+    EXTRA_QUELLEN[_p] = _suche_osf_provider(_p, _l)
+
+
+# ---------- Registry für die Brücke ----------
 
 if __name__ == "__main__":
     import sys

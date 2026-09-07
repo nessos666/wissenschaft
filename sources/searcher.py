@@ -159,8 +159,8 @@ def search(query: str, max_results: int = 8) -> list[dict]:
     # die Bibliothek/das venv nicht verfügbar ist (z. B. frisches System).
     if multi_suche is not None:
         try:
-            erg = multi_suche(query, max_results_per_source=max(2, max_results // 3),
-                              timeout_s=45.0)
+            erg = multi_suche(query, max_results_per_source=max(3, max_results // 3),
+                              timeout_s=300.0)
             ergebnisse = erg.get("papers", [])
             genutzt = erg.get("sources_used", [])
             if genutzt:

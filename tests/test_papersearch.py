@@ -95,3 +95,17 @@ def test_reihenfolge_kuratierte_zuerst():
     """CrossRef (kuratiert) vor arXiv (Preprint) — Qualitäts-Priorität."""
     assert papersearch.ALL_SOURCES.index("crossref") < \
         papersearch.ALL_SOURCES.index("arxiv")
+
+
+# ---------- Quellen-Ausbau Teil 2: +10 neue ----------
+
+def test_zehn_neue_quellen_aktiv():
+    """Die 10 neuen Quellen (seit Fusion) sind registriert."""
+    neue = {"chemrxiv", "datacite", "inspirehep", "cod", "figshare",
+            "psyarxiv", "engrxiv", "eartharxiv", "socarxiv", "africarxiv"}
+    assert neue.issubset(papersearch.SEARCHER_MAP), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_gesamt_28_quellen():
+    assert len(papersearch.ALL_SOURCES) >= 28
