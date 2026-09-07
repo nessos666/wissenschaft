@@ -1,6 +1,17 @@
-# /wissenschaft — Abhängigkeiten
-# Kern-Tool nutzt NUR die Python-Standardbibliothek (kein pip install nötig).
-#
-# Optional (nur für qdrant_save.py — Qdrant-Vektor-Speicherung):
-# sentence-transformers
-# qdrant-client
+# /wissenschaft — Fusion (12_Wissenschaft_Tool + paper-search-mcp 21 Quellen)
+# Kern-Pipeline: Standardbibliothek only (läuft ohne pip!)
+# Für die 17-Quellen-Multi-Suche (Option A): eigenes venv mit diesen Paketen
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# Ohne venv nutzt der Searcher automatisch den CrossRef+arXiv-Fallback.
+
+# Multi-Quellen-Connectors (vendor/paper_search_mcp)
+requests
+feedparser
+beautifulsoup4
+pypdf
+
+# Registry-Routing (source_router.py)
+pyyaml
+
+# Tests
+pytest

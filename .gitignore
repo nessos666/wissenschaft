@@ -17,6 +17,11 @@ Arbeitsmarkt_ATS_Kollaps/
 *.log
 wissenschaft_cache.db
 
+# --- Virtuelle Umgebung (eigenes venv — unabhängig von Hermes) ---
+.venv/
+__pycache__/
+*.pyc
+
 # --- Betriebssystem ---
 .DS_Store
 Thumbs.db

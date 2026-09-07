@@ -108,8 +108,16 @@ def test_search_leere_query():
 
 
 def test_search_struktur_offline(monkeypatch):
-    """Ohne Netz (alles wirft) → leere Liste statt Crash."""
+    """Ohne Netz (alles wirft) → leere Liste statt Crash.
+
+    Mockt die Multi-Suche weg (liefert nichts) UND urlopen kaputt → der
+    CrossRef/arXiv-Fallback bleibt übrig und muss offline eine leere Liste
+    liefern statt zu crashen.
+    """
     import urllib.request
+    # 1) Multi-Suche deaktivieren (requests-basiert — nicht per urlopen mockbar)
+    monkeypatch.setattr("sources.searcher.multi_suche", None)
+    # 2) urlopen für den Fallback kaputt machen
     def kaputt(req, timeout=None):
         raise OSError("kein Netz")
     monkeypatch.setattr(urllib.request, "urlopen", kaputt)

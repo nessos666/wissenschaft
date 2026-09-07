@@ -15,6 +15,15 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
+# FUSION (Option A): Multi-Quellen-Suche (17 Quellen) über die vendored
+# Bibliothek. Modulweit importieren mit try/except — wenn requests/feedparser
+# fehlen (Hermes-Python), ist multi_suche=None → searcher nutzt den
+# CrossRef/arXiv-Fallback. Mockbar über sources.searcher.multi_suche.
+try:
+    from sources.papersearch import search_papers as multi_suche
+except Exception:
+    multi_suche = None  # Bibliothek nicht verfügbar → Fallback-Suche
+
 TIMEOUT_S = 12
 
 
@@ -143,7 +152,33 @@ def search(query: str, max_results: int = 8) -> list[dict]:
     ergebnisse = []
     log_hinweise = []
 
-    # 1) CrossRef (Primärquelle — DOI-Registrierung, key-frei, relevanz-sortiert)
+    # 0) FUSION (Option A): Multi-Quellen-Suche über vendored paper-search-mcp
+    # (17 Quellen parallel: arxiv, pubmed, biorxiv, medrxiv, semantic, crossref,
+    # openalex, pmc, europepmc, dblp, zenodo, hal, ssrn, openaire, doaj,
+    # citeseerx, core). Fallback: direkte CrossRef+arXiv-Suche (unten), wenn
+    # die Bibliothek/das venv nicht verfügbar ist (z. B. frisches System).
+    if multi_suche is not None:
+        try:
+            erg = multi_suche(query, max_results_per_source=max(2, max_results // 3),
+                              timeout_s=45.0)
+            ergebnisse = erg.get("papers", [])
+            genutzt = erg.get("sources_used", [])
+            if genutzt:
+                log_hinweise.append(
+                    f"{len(genutzt)} Quellen: {', '.join(genutzt[:8])}")
+            # Falls die Multi-Suche nichts liefert (alle Quellen down), fällt der
+            # Code unten auf die direkte CrossRef/arXiv-Suche zurück.
+            if ergebnisse:
+                if log_hinweise:
+                    import logging
+                    logging.getLogger("sucher").info(" | ".join(log_hinweise))
+                return ergebnisse[:max_results]
+        except Exception as e:
+            log_hinweise.append(f"Multi-Suche nicht verfügbar: {type(e).__name__}")
+    else:
+        log_hinweise.append("Multi-Suche nicht verfügbar (Bibliothek fehlt)")
+
+    # 1) CrossRef (Fallback — DOI-Registrierung, key-frei, relevanz-sortiert)
     try:
         mail = os.environ.get("WISSENSCHAFT_MAIL", "kontakt@wissenshaft.tool")
         url = (f"https://api.crossref.org/works?query={q}"
