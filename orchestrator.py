@@ -45,7 +45,8 @@ class OrchestratorV3:
         if cache_herkunft:
             # Schema-identisches Minimal-Ergebnis: Suche entfällt, Rest läuft
             r = type("R", (), {"success": True, "data": {"results": raw_results or [],
-                "total_sources": 0, "search_performed": False}})()
+                "total_sources": 0, "sources_versucht": 0,
+                "sources_geliefert": [], "search_performed": False}})()
         else:
             r = self.researcher.run({"query": query, "depth": depth, "domain": domain})
             if not r.success:
@@ -142,6 +143,8 @@ class OrchestratorV3:
             "cached": cache_herkunft,
             "query": query, "domain": domain, "depth": depth,
             "researcher": {"sources": r.data.get("total_sources", 0),
+                           "sources_versucht": r.data.get("sources_versucht", 0),
+                           "sources_geliefert": r.data.get("sources_geliefert", []),
                            "results": researcher_results,
                            "search_performed": bool(r.data.get("search_performed"))},
             "verifier": v.data.get("summary", {}),

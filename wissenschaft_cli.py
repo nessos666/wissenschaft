@@ -43,7 +43,9 @@ def main():
         from sources.writer import erstelle_dossier
         pfade = erstelle_dossier(result)
         print(f"  ✅ Pipeline: success | "
-              f"{len((result.get('researcher') or {}).get('results') or [])} Treffer")
+              f"{len((result.get('researcher') or {}).get('results') or [])} Treffer "
+              f"aus {len((result.get('researcher') or {}).get('sources_geliefert') or [])} "
+              f"von {(result.get('researcher') or {}).get('sources_versucht', '?')} Quellen")
         print(f"  📁 Dossier erstellt:")
         for typ, pfad in pfade.items():
             print(f"     {typ:10s} → {pfad}")

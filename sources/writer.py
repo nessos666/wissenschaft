@@ -121,6 +121,8 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None) -> dict:
     prisma = pipeline_ergebnis.get("prisma") or {}
     domain = pipeline_ergebnis.get("domain") or "multidisciplinary"
     depth = pipeline_ergebnis.get("depth") or "standard"
+    quellen_geliefert = res.get("sources_geliefert") or []
+    quellen_versucht = res.get("sources_versucht") or "?"
 
     dossier_dir = basis / f"{_slug(query)}_Dossier"
     dossier_dir.mkdir(parents=True, exist_ok=True)
@@ -130,6 +132,7 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None) -> dict:
 
 > Systematische Recherche: {query}
 > Methode: PRISMA-Systematik | Tiefe: {depth} | Domain: {domain}
+> Quellen: {len(quellen_geliefert)} von {quellen_versucht} aktiv ({", ".join(quellen_geliefert) if quellen_geliefert else "keine"})
 > Erstellt: {date_str} | XX_WissenschaftSkill/{_slug(query)}_Dossier/
 
 ---

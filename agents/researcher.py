@@ -37,15 +37,29 @@ class ResearcherAgent(BaseAgent):
                          f"nutze direkte Suche ohne Quellenliste")
             mcp_sources = [s for s in sources if s.mcp_tool]
             direct_sources = [s for s in sources if not s.mcp_tool]
-            
-            self.log(f"{len(treffer)} echte Treffer ({len(mcp_sources)} MCP-"
-                     f"{'Quelle' if len(mcp_sources)==1 else 'Quellen'} geroutet)")
-            
+
+            # Quellen-Transparenz (Qualitäts-Verbesserung): ECHTE gelieferte
+            # Quellen aus den Treffer-source-Feldern zählen (nicht Routing).
+            gelieferte = sorted({t.get("source", "?") for t in treffer
+                                 if isinstance(t, dict)})
+            # Gesamtzahl der aktiv versuchten Quellen (Brücke), wenn verfügbar
+            try:
+                from sources.papersearch import ALL_SOURCES
+                versucht = len(ALL_SOURCES)
+            except Exception:
+                versucht = len(sources) or 0
+
+            self.log(f"{len(treffer)} echte Treffer aus "
+                     f"{len(gelieferte)} von {versucht} Quellen "
+                     f"({len(mcp_sources)} MCP-Quellen geroutet)")
+
             return self.ok({
                 "query": query,
                 "domain": domain,
                 "depth": depth,
                 "total_sources": len(sources),
+                "sources_versucht": versucht,
+                "sources_geliefert": gelieferte,
                 "mcp_sources": [{"name": s.name, "tool": s.mcp_tool, "tier": s.tier} for s in mcp_sources],
                 "direct_sources": [{"name": s.name, "tier": s.tier} for s in direct_sources],
                 "results": treffer,  # Block 2: echte Suchergebnisse
