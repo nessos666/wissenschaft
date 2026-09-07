@@ -19,6 +19,9 @@ def main():
     parser.add_argument("--plan", action="store_true", help="Nur Suchplan ausgeben")
     parser.add_argument("--input", type=str, help="JSON-Datei mit Roh-Ergebnissen")
     parser.add_argument("--orchestrate", action="store_true", help="4-Agent-Pipeline nutzen")
+    parser.add_argument("--dossier", action="store_true",
+                        help="KOMPLETT: echte Suche → Pipeline → Dossier erstellen "
+                             "(kein --input nötig — Researcher sucht selbst)")
     args = parser.parse_args()
 
     if not args.query:
@@ -27,6 +30,24 @@ def main():
 
     # Analyse
     q = analyze_query(args.query)
+
+    if args.dossier:
+        # Block 4: KOMPLETT-Lauf — echte Suche (Researcher) → Pipeline → Dossier
+        print(f"🔬 /wissenschaft — Komplett-Recherche: '{args.query}' (Tiefe: {args.tiefe})")
+        orch = Orchestrator()
+        result = orch.run_pipeline(query=args.query, depth=args.tiefe,
+                                   raw_results=None, use_cache=False)
+        if not result.get("pipeline_success"):
+            print(f"  ✗ Pipeline fehlgeschlagen: {result.get('error', '?')}")
+            return
+        from sources.writer import erstelle_dossier
+        pfade = erstelle_dossier(result)
+        print(f"  ✅ Pipeline: success | "
+              f"{len((result.get('researcher') or {}).get('results') or [])} Treffer")
+        print(f"  📁 Dossier erstellt:")
+        for typ, pfad in pfade.items():
+            print(f"     {typ:10s} → {pfad}")
+        return
     
     if args.plan:
         sources = route_sources(q.domain_guess, args.tiefe)
