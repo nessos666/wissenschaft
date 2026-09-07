@@ -9,9 +9,8 @@ from agents.synthesis import SynthesisAgent
 from agents.reviewer import ReviewerAgent
 from evidence_scorer import score_evidence, evidence_summary
 from clusterer import generate_cluster_report
-from prisma import compute_prisma, generate_prisma_markdown
+from prisma import compute_prisma
 from cache import ResponseCache
-from deduplicator import SearchResult
 
 
 class OrchestratorV3:
@@ -26,22 +25,31 @@ class OrchestratorV3:
                      raw_results: list[dict] = None, use_cache: bool = True) -> dict:
         t0 = time.time()
         
-        # Cache-Check
+        # Cache-Check — Abschluss-Review F5: früher early-return mit Mini-Schema
+        # ({cached, success, note}), das researcher/prisma/synthesis fehlte →
+        # Konsumenten (Dossier-Writer) crashten bei Cache-Hit. Jetzt: Treffer
+        # rehydrieren und Pipeline normal weiterlaufen lassen (schema-identisch).
+        cache_herkunft = False
         if use_cache and depth != "tief":
             cached = self.cache.get(query, depth)
-            if cached:
-                return {"cached": True, "pipeline_success": True, "pipeline_duration_ms": 5,
-                        "cache_note": "Ergebnisse aus Cache (24h TTL)"}
+            if cached and raw_results is None:
+                cache_herkunft = True
+                raw_results = cached
         
         # Domain
         from query_analyzer import analyze_query
         q = analyze_query(query)
         domain = domain or q.domain_guess
         
-        # Phase 1: Researcher
-        r = self.researcher.run({"query": query, "depth": depth, "domain": domain})
-        if not r.success:
-            return {"error": "Researcher fehlgeschlagen", "details": r.errors}
+        # Phase 1: Researcher — bei Cache-Hit überspringen (kein Netz-Request!)
+        if cache_herkunft:
+            # Schema-identisches Minimal-Ergebnis: Suche entfällt, Rest läuft
+            r = type("R", (), {"success": True, "data": {"results": raw_results or [],
+                "total_sources": 0, "search_performed": False}})()
+        else:
+            r = self.researcher.run({"query": query, "depth": depth, "domain": domain})
+            if not r.success:
+                return {"error": "Researcher fehlgeschlagen", "details": r.errors}
         
         # Block 2: Researcher liefert echte Treffer (search_performed=True).
         # Wenn KEINE externen raw_results gegeben sind, nutze die internen.
@@ -52,9 +60,12 @@ class OrchestratorV3:
         # Block 5: Dedup VOR Verifier — aus Roh-Treffern Duplikate entfernen
         # (DOI-Match + Titel-Fuzzy). raw_results sind rohe Dicts.
         from deduplicator import deduplicate, searchresult_from_dict
-        roh_anzahl = len(raw_results or [])
+        # Abschluss-Review F1: ERST normalisieren, DANN zählen — Nicht-Dict-Müll
+        # (String/None) darf nicht als "Record" in PRISMA identified landen
+        # (sonst: identified=2, screened=1 = erfundene "Duplikat-Entfernung").
         sr_liste = [sr for sr in (searchresult_from_dict(x) for x in (raw_results or []))
                     if sr is not None]
+        roh_anzahl = len(sr_liste)  # nur valide Records
         dedupliziert = deduplicate(sr_liste) if sr_liste else []
         # Deduplizierte zurück in Dicts für Verifier (Pipeline-Vertrag)
         raw_nach_dedup = [{
@@ -115,7 +126,6 @@ class OrchestratorV3:
                        if isinstance(x, dict) and x.get("pdf_url"))
         final_count = min(total_dedup, 20)
         prisma_flow = compute_prisma(total_raw, total_dedup, oa_count, final_count)
-        prisma_md = generate_prisma_markdown(prisma_flow)
         
         # Cache speichern (deduplizierte Treffer — Block 5)
         if raw_nach_dedup and use_cache:
@@ -129,7 +139,7 @@ class OrchestratorV3:
         researcher_results = (raw_nach_dedup or [])[:20]
         return {
             "pipeline_success": True,
-            "cached": False,
+            "cached": cache_herkunft,
             "query": query, "domain": domain, "depth": depth,
             "researcher": {"sources": r.data.get("total_sources", 0),
                            "results": researcher_results,

@@ -79,20 +79,34 @@ def title_similarity(t1: str, t2: str) -> float:
     """Berechnet Ähnlichkeit zweier Titel."""
     return SequenceMatcher(None, normalize_title(t1), normalize_title(t2)).ratio()
 
+def _merge_duplikat(ziel: "SearchResult", dup: "SearchResult") -> None:
+    """Füllt leere Felder aus dem Duplikat (first-non-empty je Feld).
+
+    Abschluss-Review F2: vorher gingen pdf_url/url/authors/year/is_oa der
+    späteren (oft reicheren) Quelle verloren — nur abstract+citations wurden
+    gemerged. Jetzt: alle Felder, je Feld das erste Nicht-Leere gewinnt.
+    """
+    ziel.merged_from.append(dup.source)
+    if len(dup.abstract) > len(ziel.abstract):
+        ziel.abstract = dup.abstract
+    if dup.citations > ziel.citations:
+        ziel.citations = dup.citations
+    for feld in ("pdf_url", "url", "authors", "year", "doi"):
+        if not getattr(ziel, feld) and getattr(dup, feld):
+            setattr(ziel, feld, getattr(dup, feld))
+    if dup.is_oa and not ziel.is_oa:
+        ziel.is_oa = True
+
+
 def deduplicate(results: list[SearchResult]) -> list[SearchResult]:
-    """Entfernt Duplikate: DOI-Match zuerst, dann Titel-Fuzzy > 0.85."""
+    """Entfernt Duplikate: DOI-Match zuerst, dann Titel-Fuzzy (> 0.70)."""
     unique = []
     seen_dois = {}
     
     for r in results:
         # Stufe 1: DOI-Match
         if r.doi and r.doi in seen_dois:
-            seen_dois[r.doi].merged_from.append(r.source)
-            # Merge abstract if longer
-            if len(r.abstract) > len(seen_dois[r.doi].abstract):
-                seen_dois[r.doi].abstract = r.abstract
-            if r.citations > seen_dois[r.doi].citations:
-                seen_dois[r.doi].citations = r.citations
+            _merge_duplikat(seen_dois[r.doi], r)
             continue
         
         if r.doi:
@@ -104,9 +118,7 @@ def deduplicate(results: list[SearchResult]) -> list[SearchResult]:
         is_dup = False
         for u in unique:
             if title_similarity(r.title, u.title) > 0.70:
-                u.merged_from.append(r.source)
-                if r.citations > u.citations:
-                    u.citations = r.citations
+                _merge_duplikat(u, r)
                 is_dup = True
                 break
         

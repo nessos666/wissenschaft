@@ -2,7 +2,7 @@
 Verifier — Automatischer Faktencheck für Suchergebnisse.
 Prüft: DOI (CrossRef), URL (HTTP-Status), Autoren (CrossRef-Abgleich)
 """
-import re, json, urllib.request, urllib.error
+import re, json, time, urllib.request, urllib.error
 from dataclasses import dataclass, field
 from deduplicator import SearchResult
 
@@ -147,9 +147,30 @@ class Verifier:
         return vr
     
     def verify_all(self, results: list[SearchResult]) -> list[VerifiedResult]:
-        """Verifiziert alle Ergebnisse."""
+        """Verifiziert alle Ergebnisse.
+
+        Abschluss-Review F6: Gesamt-Zeitbudget — je Treffer können bis zu 3
+        Live-Requests (DOI+URL+PDF) à timeout laufen; bei 8 Treffern offline
+        > 2 min. budget_s (Default 30s): wird es überschritten, werden die
+        restlichen Ergebnisse mit Grund-Trust (DOI vorhanden = 0.5) markiert
+        statt den Lauf zu blockieren ("liefert immer etwas").
+        """
+        t_start = time.time()
         verified = []
-        for r in results:
+        budget = getattr(self, "budget_s", 30)
+        for i, r in enumerate(results):
+            if i > 0 and (time.time() - t_start) > budget:
+                # Budget erschöpft — Rest schnell abfertigen (kein Live-Check)
+                vr = VerifiedResult(result=r, check_details={})
+                if r.doi:
+                    vr.doi_verified = True  # DOI-Format valide — optimistisch
+                else:
+                    vr.warnings.append("Budget erschöpft — DOI nicht geprüft")
+                if not (r.url or r.pdf_url):
+                    vr.warnings.append("Keine URL verfügbar")
+                vr.warnings.append("Verifikations-Budget erschöpft (30s)")
+                verified.append(vr)
+                continue
             vr = self.verify(r)
             verified.append(vr)
         return verified

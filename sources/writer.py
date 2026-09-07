@@ -59,15 +59,39 @@ def _quellen_markdown(results: list) -> str:
     return "\n".join(zeilen)
 
 
+def _bibtex_escape(text: str) -> str:
+    """LaTeX/BibTeX-Sonderzeichen escapen (& % # _ { } ~ $ ^).
+
+    Abschluss-Review F4: reale Titel enthalten '&'/'_' häufig → ohne Escaping
+    wäre die .bib-Datei invalide.
+    """
+    ersatz = {"&": r"\&", "%": r"\%", "#": r"\#", "_": r"\_",
+              "{": r"\{", "}": r"\}", "~": r"\textasciitilde{}",
+              "$": r"\$", "^": r"\textasciicircum{}"}
+    return "".join(ersatz.get(c, c) for c in text)
+
+
+def _bibtex_authors(authors: str) -> str:
+    """Autorenliste → BibTeX-Format: 'A; B' bzw. 'A and B'."""
+    if not authors or authors == "unbekannt":
+        return "unbekannt"
+    teile = [a.strip() for a in authors.replace("; ", ";").split(";")
+             if a.strip()]
+    if len(teile) <= 1:
+        # 'Nachname, Vorname'-Paare NICHT zerlegen — nur saubere Namen
+        teile = [authors.strip()]
+    return " and ".join(_bibtex_escape(t) for t in teile[:20])
+
+
 def _bibtex(results: list) -> str:
-    """Treffer → BibTeX-Einträge (key aus slug+year)."""
+    """Treffer → BibTeX-Einträge (key aus slug+year, escaped)."""
     if not results:
         return "% Keine Treffer — keine BibTeX-Einträge."
     eintraege = []
     for i, r in enumerate(results, 1):
-        title = (r.get("title") or "Ohne Titel").strip()
+        title = _bibtex_escape((r.get("title") or "Ohne Titel").strip())
         year = str(r.get("year") or "n.d.")
-        authors = (r.get("authors") or "unbekannt").strip()
+        authors = _bibtex_authors((r.get("authors") or "").strip())
         doi = (r.get("doi") or "").strip()
         source = (r.get("source") or "unknown").lower().replace(" ", "")
         key = f"{source}{year}{i}"
@@ -75,8 +99,8 @@ def _bibtex(results: list) -> str:
                          f"  title = {{{title}}},\n"
                          f"  author = {{{authors}}},\n"
                          f"  year = {{{year}}},\n"
-                         + (f"  doi = {{{doi}}},\n" if doi else "")
-                         + f"  note = {{Quelle: {r.get('source', '?')}}}\n"
+                         + (f"  doi = {{{_bibtex_escape(doi)}}},\n" if doi else "")
+                         + f"  note = {{Quelle: {_bibtex_escape(str(r.get('source', '?')))}}}\n"
                          f"}}")
     return "\n\n".join(eintraege)
 

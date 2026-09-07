@@ -27,7 +27,14 @@ class ResearcherAgent(BaseAgent):
             from sources.searcher import search as echte_suche
             treffer = echte_suche(query, max_results=max_results)
             
-            sources = route_sources(domain, depth)
+            sources = []
+            try:
+                sources = route_sources(domain, depth)
+            except Exception as e:
+                # Abschluss-Review F7: Registry fehlt/kaputt (frische Maschine) →
+                # nicht failen, leere Quellenliste reicht (echte Suche läuft trotzdem)
+                self.log(f"Quellen-Registry nicht verfügbar ({type(e).__name__}): "
+                         f"nutze direkte Suche ohne Quellenliste")
             mcp_sources = [s for s in sources if s.mcp_tool]
             direct_sources = [s for s in sources if not s.mcp_tool]
             
