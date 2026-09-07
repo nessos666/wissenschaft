@@ -9,6 +9,7 @@ Feld-Standard (Pipeline-Vertrag):
   source, citations, abstract, authors
 """
 import json
+import os
 import re
 import urllib.parse
 import urllib.request
@@ -48,37 +49,44 @@ def _norm_doi(doi: str) -> str:
     return d
 
 
-# ---------- OpenAlex ----------
+# ---------- CrossRef (Primärquelle, DOI-Registrierung) ----------
 
-def _parse_openalex(data: dict) -> list[dict]:
-    """OpenAlex /works-Antwort → standardisierte Dicts."""
+def _parse_crossref(data: dict) -> list[dict]:
+    """CrossRef /works-Antwort → standardisierte Dicts (Block: OpenAlex-Ersatz).
+
+    OpenAlex hat 2025 ein Budget-System eingeführt (freier Pool oft erschöpft,
+    HTTP 429 '$0 remaining'); CrossRef ist die DOI-Registrierungsstelle —
+    key-frei, großzügige Limits, relevanz-sortierte query-Suche.
+    """
     out = []
-    for r in (data.get("results") or []):
+    for r in ((data.get("message") or {}).get("items") or []):
         if not isinstance(r, dict):
             continue
-        title = _as_str(r.get("title"))[:500]
+        title = _as_str((r.get("title") or [""])[0])[:500]
         if not title:
             continue
         authors = ", ".join(
-            a.get("author", {}).get("display_name", "")
-            for a in (r.get("authorships") or [])
-            if isinstance(a, dict) and isinstance(a.get("author"), dict)
+            f"{a.get('given', '')} {a.get('family', '')}".strip()
+            for a in (r.get("author") or [])
+            if isinstance(a, dict)
         )[:300]
-        loc = r.get("primary_location")
-        pdf_url = ""
-        landing = ""
-        if isinstance(loc, dict):
-            pdf_url = _as_str(loc.get("pdf_url"))
-            landing = _as_str(loc.get("landing_page_url"))
+        jahr = None
+        for k in ("published-print", "published-online", "issued"):
+            dp = (r.get(k) or {}).get("date-parts")
+            if dp and dp[0] and dp[0][0]:
+                jahr = dp[0][0]
+                break
+        # Abstract liegt als JATS-XML vor — nur grob säubern, Rohtext-Bestand
+        abstr = _as_str(r.get("abstract"))[:1000]
         out.append({
             "title": title,
-            "year": r.get("publication_year"),
-            "doi": _norm_doi(r.get("doi")),
-            "url": landing or r.get("id", ""),
-            "pdf_url": pdf_url,
-            "source": "OpenAlex",
-            "citations": _as_int(r.get("cited_by_count")),
-            "abstract": _as_str(r.get("abstract_inverted_index"))[:0],  # Abstract ist invertiert — Roh nicht nutzbar
+            "year": jahr,
+            "doi": _norm_doi(r.get("DOI")),
+            "url": _as_str(r.get("URL")) or f"https://doi.org/{r.get('DOI', '')}",
+            "pdf_url": "",
+            "source": "CrossRef",
+            "citations": _as_int(r.get("is-referenced-by-count")),
+            "abstract": abstr,
             "authors": authors,
         })
     return out
@@ -133,29 +141,45 @@ def search(query: str, max_results: int = 8) -> list[dict]:
         return []
     q = urllib.parse.quote(query.strip())
     ergebnisse = []
+    log_hinweise = []
 
-    # 1) OpenAlex (breiteste wissenschaftliche Abdeckung)
+    # 1) CrossRef (Primärquelle — DOI-Registrierung, key-frei, relevanz-sortiert)
     try:
-        url = (f"https://api.openalex.org/works?search={q}"
-               f"&per-page={max_results}&mailto=recherche@example.org")
+        mail = os.environ.get("WISSENSCHAFT_MAIL", "kontakt@wissenshaft.tool")
+        url = (f"https://api.crossref.org/works?query={q}"
+               f"&rows={max_results}&select=DOI,title,author,issued,abstract,URL,is-referenced-by-count"
+               f"&mailto={urllib.parse.quote(mail)}")
         with _open(url) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-        ergebnisse.extend(_parse_openalex(data))
-    except Exception:
-        pass  # OpenAlex down → arXiv liefert weiter (nie crashen)
+        ergebnisse.extend(_parse_crossref(data))
+    except Exception as e:
+        # Nie crashen — aber Fehler sichtbar machen (nicht mehr still verschlucken)
+        log_hinweise.append(f"CrossRef-Fehler: {type(e).__name__}: {e}")
 
-    # 2) arXiv (Preprints, CS/ML/Physik)
+    # 2) arXiv (Preprints, CS/ML/Physik) — nur auffüllen, wenn CrossRef zu wenig
     if len(ergebnisse) < max_results:
         try:
             url = (f"http://export.arxiv.org/api/query?search_query="
                    f"all:{q}&start=0&max_results={max_results}")
             with _open(url) as resp:
                 xml_text = resp.read().decode("utf-8")
-            ergebnisse.extend(_parse_arxiv(xml_text))
-        except Exception:
-            pass
+            arxiv_treffer = _parse_arxiv(xml_text)
+            # arXiv nicht über CrossRef-Ergebnisse legen (die sind relevanter)
+            vorhandene_dois = {e.get("doi") for e in ergebnisse}
+            for t in arxiv_treffer:
+                if len(ergebnisse) >= max_results:
+                    break
+                if t.get("doi") and t.get("doi") in vorhandene_dois:
+                    continue
+                ergebnisse.append(t)
+        except Exception as e:
+            log_hinweise.append(f"arXiv-Fehler: {type(e).__name__}: {e}")
 
-    return ergebnisse[:max_results]
+    ergebnisse[:] = ergebnisse[:max_results]
+    if log_hinweise:
+        import logging
+        logging.getLogger("sucher").warning(" | ".join(log_hinweise))
+    return ergebnisse
 
 
 if __name__ == "__main__":

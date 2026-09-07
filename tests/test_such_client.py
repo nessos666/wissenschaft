@@ -1,8 +1,9 @@
 """Block 2 — Echter Such-Client (RED zuerst): searcher.py existiert nicht.
 
 Der Researcher-Agent soll ECHT suchen können (nicht nur routen). Neues Modul
-sources/searcher.py: query → Ergebnisse aus key-freien APIs (OpenAlex + arXiv,
-Muster aus SUCHER-1000). Ohne externe JSON-Datei.
+sources/searcher.py: query → Ergebnisse aus key-freien APIs (CrossRef + arXiv,
+harte Timeouts, Quelle-down→andere-liefert). Abschluss-Review-Fix: OpenAlex
+hat Budget-System (HTTP 429 '$0') → CrossRef als Primärquelle.
 """
 import sys
 from pathlib import Path
@@ -12,47 +13,56 @@ sys.path.insert(0, str(BASE))
 
 import pytest
 
-# Modul existiert noch nicht → Import schlägt fehl (RED)
 searcher = pytest.importorskip("sources.searcher")
 
 
-def test_modul_liefert_search_funktion():
-    assert callable(searcher.search), "searcher.search fehlt"
+# ---------- CrossRef-Parser ----------
 
-
-def test_openalex_parser_robust(fake_payloads=None):
-    """OpenAlex-API-Antwort → standardisierte Dicts (Feld-Mapping korrekt)."""
-    antwort = {"results": [
-        {"title": "Bentonite water retention", "publication_year": 2020,
-         "doi": "https://doi.org/10.1016/x", "id": "https://openalex.org/W1",
-         "cited_by_count": 42, "primary_location": {"pdf_url": "https://pdf.de/1",
-         "landing_page_url": "https://journal.de/1"}},
-    ]}
-    out = searcher._parse_openalex(antwort)
+def test_crossref_parser_robust():
+    """CrossRef /works-Antwort → standardisierte Dicts (Feld-Mapping)."""
+    antwort = {"message": {"items": [
+        {"title": ["EMDR Therapy and Posttraumatic Growth"],
+         "DOI": "10.1016/j.janxdis.2021.01.001",
+         "URL": "https://doi.org/10.1016/j.janxdis.2021.01.001",
+         "issued": {"date-parts": [[2021, 3, 1]]},
+         "author": [{"given": "Anna", "family": "Becker"}],
+         "is-referenced-by-count": 42},
+    ]}}
+    out = searcher._parse_crossref(antwort)
     assert len(out) == 1
     r = out[0]
-    assert r["title"] == "Bentonite water retention"
-    assert r["year"] == 2020
-    assert r["doi"] == "10.1016/x"  # volle URL → nackte DOI normalisiert
-    assert r["source"] == "OpenAlex"
+    assert "EMDR" in r["title"]
+    assert r["year"] == 2021
+    assert r["doi"] == "10.1016/j.janxdis.2021.01.001"  # ohne https://doi.org
+    assert r["source"] == "CrossRef"
     assert r["citations"] == 42
+    assert "Becker" in r["authors"]
 
 
-def test_openalex_parser_leere_antwort():
-    assert searcher._parse_openalex({"results": []}) == []
-    assert searcher._parse_openalex({}) == []
+def test_crossref_parser_leere_antwort():
+    assert searcher._parse_crossref({"message": {"items": []}}) == []
+    assert searcher._parse_crossref({}) == []
 
+
+def test_crossref_parser_kaputte_eintraege_ueberleben():
+    """Nicht-Dict-Einträge + fehlende Titel crashen nicht."""
+    antwort = {"message": {"items": ["müll", {"title": ["Gültig"]}, None]}}
+    out = searcher._parse_crossref(antwort)
+    assert len(out) == 1
+    assert out[0]["title"] == "Gültig"
+
+
+# ---------- arXiv-Parser ----------
 
 def test_arxiv_parser_robust():
-    """arXiv-Atom-XML → standardisierte Dicts."""
     xml = """<?xml version="1.0"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
       <entry>
         <title>Large Language Model Agents</title>
         <published>2024-03-01T00:00:00Z</published>
-        <id>http://arxiv.org/abs/2401.00001v1</id>
-        <author><name>Jane Smith</name></author>
-        <summary>Survey of LLM agents and tool use.</summary>
+        <id>http://arxiv.org/abs/2403.0001v1</id>
+        <author><name>Jane Doe</name></author>
+        <summary>We study agents.</summary>
       </entry>
     </feed>"""
     out = searcher._parse_arxiv(xml)
@@ -64,40 +74,44 @@ def test_arxiv_parser_robust():
     assert r["source"] == "arXiv"
 
 
-def test_search_ergebnis_struktur(monkeypatch):
-    """search() liefert Liste von Dicts mit Standard-Feldern (auch ohne Netz
-    via gemocktem Transport — prüft die Verdrahtung, nicht das echte Netz)."""
-    # Transport mocken: openalex liefert 1 Treffer, arxiv leer
-    calls = []
+def test_arxiv_parser_kaputtes_xml():
+    assert searcher._parse_arxiv("<<<kaputt>>>") == []
 
-    class FakeTransport:
-        def open(self, url, timeout=8):
-            calls.append(url)
-            if "openalex.org" in url:
-                body = b'{"results": [{"title": "Test Paper", "publication_year": 2021, "doi": "https://doi.org/10.1/x"}]}'
-            else:
-                body = b'<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"></feed>'
-            return FakeResponse(body)
 
-    class FakeResponse:
-        def __init__(self, body):
-            self._body = body
+# ---------- search(): Quelle-down→andere-liefert ----------
 
-        def read(self):
-            return self._body
+def test_search_crossref_down_arxiv_liefert(monkeypatch):
+    """CrossRef wirft 429 → arXiv liefert trotzdem (nie crashen)."""
+    import urllib.request
+    original_urlopen = urllib.request.urlopen
 
-        def __enter__(self):
-            return self
+    def fake_urlopen(req, timeout=None):
+        if "crossref.org" in str(req.full_url):
+            raise urllib.error.HTTPError(str(req.full_url), 429, "Rate limit",
+                                         {}, None)
+        # arXiv: leere Antwort (kein Treffer)
+        xml = '<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"/>'
+        class R:
+            def read(self): return xml.encode()
+            def __exit__(self, *a): pass
+            def __enter__(self): return self
+        return R()
 
-        def __exit__(self, *a):
-            return False
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    out = searcher.search("irgendwas", max_results=5)
+    assert isinstance(out, list)  # nie None/crash
 
-    import sources.searcher as s
-    # Transport injizieren (searcher nutzt intern urllib — hier monkeypatchen)
-    monkeypatch.setattr(s, "_open", FakeTransport().open)
-    results = s.search("test query", max_results=3)
-    assert isinstance(results, list)
-    # Mindestens die Feld-Struktur eines Treffers prüfen (openalex-Treffer)
-    if results:
-        for key in ("title", "year", "doi", "source", "url"):
-            assert key in results[0], f"Feld {key} fehlt"
+
+def test_search_leere_query():
+    assert searcher.search("   ") == []
+    assert searcher.search("") == []
+
+
+def test_search_struktur_offline(monkeypatch):
+    """Ohne Netz (alles wirft) → leere Liste statt Crash."""
+    import urllib.request
+    def kaputt(req, timeout=None):
+        raise OSError("kein Netz")
+    monkeypatch.setattr(urllib.request, "urlopen", kaputt)
+    out = searcher.search("bentonite", max_results=5)
+    assert out == []

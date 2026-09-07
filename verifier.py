@@ -28,7 +28,7 @@ class Verifier:
             return {"valid": False, "title": "", "error": "Kein DOI"}
         try:
             url = f"https://api.crossref.org/works/{doi}"
-            req = urllib.request.Request(url, headers={"User-Agent": "Hermes-Verifier/2.0 (mailto:david@example.com)"})
+            req = urllib.request.Request(url, headers={"User-Agent": "WissenschaftTool-Verifier/2.0 (+https://github.com/nessos666)"})
             resp = urllib.request.urlopen(req, timeout=self.timeout)
             data = json.loads(resp.read())
             title = data.get("message", {}).get("title", [""])[0]
@@ -43,7 +43,7 @@ class Verifier:
         if not url:
             return False
         try:
-            req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "Hermes-Verifier/2.0"})
+            req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "WissenschaftTool-Verifier/2.0 (+https://github.com/nessos666)"})
             resp = urllib.request.urlopen(req, timeout=self.timeout)
             return 200 <= resp.status < 400
         except Exception:
