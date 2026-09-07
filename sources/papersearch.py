@@ -11,7 +11,13 @@ Design (free-first, wie das Original):
 """
 import asyncio
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+# Eigener Executor mit vielen Workern — der asyncio-Default (min(32, cpu+4))
+# erlaubt nur ~4-8 gleichzeitige Threads, wodurch 20 Quellen in Wellen liefen
+# und hängende Quellen die schnellen blockierten (Fusion-Fix).
+_EXECUTOR = ThreadPoolExecutor(max_workers=24, thread_name_prefix="wissq")
 
 VENDOR = Path(__file__).resolve().parents[1] / "vendor" / "paper_search_mcp"
 if str(VENDOR) not in sys.path:
@@ -58,6 +64,15 @@ SEARCHER_MAP = {
     "biorxiv": BioRxivSearcher,
     "medrxiv": MedRxivSearcher,
 }
+ALL_SOURCES = list(SEARCHER_MAP.keys())
+
+# Extra-Quellen (Quellen-Ausbau 2026-09): eigene Connectors für Chemie/Physik/
+# Generisch. Funktionen liefern direkt unser _norm-Format.
+from sources.quellen_extra import EXTRA_QUELLEN
+
+# Gesamt-Reihenfolge (Qualitäts-Priorität): kuratierte DOI-Quellen zuerst,
+# dann Preprints, dann die neuen Domänen-Quellen.
+SEARCHER_MAP.update({name: fn for name, fn in EXTRA_QUELLEN.items()})
 ALL_SOURCES = list(SEARCHER_MAP.keys())
 
 
@@ -115,12 +130,19 @@ def _norm(paper: dict) -> dict:
     }
 
 
-def _search_eine(searcher_cls, query: str, max_results: int) -> list:
-    """Eine Quelle synchron abfragen (in Thread ausgeführt). Nie crashen."""
+def _search_eine(quelle, query: str, max_results: int) -> list:
+    """Eine Quelle abfragen (in Thread ausgeführt). Nie crashen.
+
+    quelle: Searcher-KLASSE (Vendor, Paper-Objekte → _norm) ODER Funktion
+    (Extra-Quellen, liefern bereits normierte Dicts).
+    """
     try:
-        searcher = searcher_cls()
-        papers = searcher.search(query, max_results=max_results)
-        return [p.to_dict() for p in (papers or [])]
+        if isinstance(quelle, type):
+            searcher = quelle()
+            papers = searcher.search(query, max_results=max_results)
+            return [_norm(p.to_dict()) for p in (papers or [])]
+        # Funktion (Extra-Quelle): liefert schon unser Schema
+        return quelle(query, max_results=max_results) or []
     except Exception:
         return []
 
@@ -146,18 +168,21 @@ def search_papers(query: str, max_results_per_source: int = 3,
                 "papers": [], "errors": {"sources": "keine valide Quelle"}}
 
     async def _lauf():
-        tasks = {q: asyncio.to_thread(_search_eine, SEARCHER_MAP[q],
-                                      query, max_results_per_source)
+        # Tasks PARALLEL starten, aber pro Quelle einzeln abwarten mit
+        # Kurz-Timeout (8s): schnelle Quellen (CrossRef ~1s) liefern sofort,
+        # hängende/rate-limitede Quellen (interne Retries bis 30s) werden
+        # abgebrochen statt den GESAMT-Lauf zu blockieren (Fusion-Fix).
+        tasks = {q: asyncio.get_event_loop().run_in_executor(
+                     _EXECUTOR, _search_eine, SEARCHER_MAP[q], query,
+                     max_results_per_source)
                  for q in quellen}
-        done = await asyncio.wait_for(
-            asyncio.gather(*tasks.values(), return_exceptions=True),
-            timeout=timeout_s)
+        pro_quelle_s = min(5.0, timeout_s)
         ergebnis = {}
-        for q, res in zip(tasks.keys(), done):
-            if isinstance(res, Exception):
-                ergebnis[q] = []
-            else:
-                ergebnis[q] = res
+        for q, t in tasks.items():
+            try:
+                ergebnis[q] = await asyncio.wait_for(t, timeout=pro_quelle_s)
+            except Exception:
+                ergebnis[q] = []  # Quelle zu langsam/Fehler — andere liefern
         return ergebnis
 
     try:
@@ -174,7 +199,7 @@ def search_papers(query: str, max_results_per_source: int = 3,
             alle_roh.extend(treffer)
         else:
             fehler[q] = "keine Treffer/Fehler"
-    papers = [_norm(p) for p in _dedupe(alle_roh)]
+    papers = _dedupe(alle_roh)  # bereits normiert in _search_eine
     return {"query": query, "sources_used": genutzt, "total": len(papers),
             "papers": papers, "errors": fehler}
 

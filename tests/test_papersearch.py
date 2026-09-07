@@ -75,3 +75,23 @@ def test_search_quellen_auswahl():
     erg = ps.search_papers("test", sources="arxiv", timeout_s=5)
     assert erg["total"] >= 1
     assert erg["sources_used"] == ["arxiv"]
+
+
+# ---------- Quellen-Ausbau: Extra-Connectors ----------
+
+def test_extra_quellen_registriert():
+    """Die neuen Domänen-Quellen sind in der Brücke aktiv."""
+    assert "chemrxiv" in papersearch.SEARCHER_MAP  # Chemie
+    assert "datacite" in papersearch.SEARCHER_MAP  # generisch
+    assert "inspirehep" in papersearch.SEARCHER_MAP  # Physik
+
+
+def test_quellen_anzahl_gestiegen():
+    """20+ Quellen registriert (ursprünglich 17)."""
+    assert len(papersearch.ALL_SOURCES) >= 20
+
+
+def test_reihenfolge_kuratierte_zuerst():
+    """CrossRef (kuratiert) vor arXiv (Preprint) — Qualitäts-Priorität."""
+    assert papersearch.ALL_SOURCES.index("crossref") < \
+        papersearch.ALL_SOURCES.index("arxiv")
