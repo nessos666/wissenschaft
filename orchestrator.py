@@ -48,17 +48,20 @@ class OrchestratorV3:
         v = self.verifier.run(v_input)
         
         # Phase 3: Evidence Scoring
+        # Block 3 (Robustheit): zentrale Normalisierung — rohe externe Daten
+        # können Nicht-Dict-Einträge und None-Felder enthalten, nie crashen.
+        from deduplicator import searchresult_from_dict
         search_results = []
+        verified_map = {}
+        for x in (v.data.get("verified_results") or []):
+            if isinstance(x, dict):
+                verified_map[x.get("title", "")] = x.get("trust_score", 0.5)
         for item in (raw_results or []):
-            sr = SearchResult(
-                title=item.get("title",""), source=item.get("source",""),
-                year=str(item.get("year","")), doi=item.get("doi",""),
-                abstract=item.get("abstract",""),
-            )
-            if hasattr(sr, 'trust_score'):
-                score = next((x.get("trust_score",0.5) for x in v.data.get("verified_results",[]) 
-                             if x.get("title") == sr.title), 0.5)
-                sr.trust_score = score
+            sr = searchresult_from_dict(item)
+            if sr is None:
+                continue
+            # Trust-Score aus Verifier-Phase übernehmen (falls vorhanden)
+            sr.trust_score = verified_map.get(sr.title, 0.5)
             search_results.append(sr)
         
         evidence_scored = score_evidence(search_results) if search_results else []
@@ -83,15 +86,18 @@ class OrchestratorV3:
         # Phase 7: PRISMA
         total_raw = len(raw_results or [])
         total_dedup = len(v.data.get("verified_results", []))
-        oa_count = sum(1 for x in (raw_results or []) if x.get("pdf_url"))
+        # Block 3: defensiv — Einträge können Nicht-Dict sein
+        oa_count = sum(1 for x in (raw_results or [])
+                       if isinstance(x, dict) and x.get("pdf_url"))
         final_count = min(total_dedup, 20)
         prisma_flow = compute_prisma(total_raw, total_dedup, oa_count, final_count)
         prisma_md = generate_prisma_markdown(prisma_flow)
         
         # Cache speichern
         if raw_results and use_cache:
-            self.cache.set(query, raw_results, depth, 
-                          sources=[s.get("source","?") for s in raw_results])
+            self.cache.set(query, raw_results, depth,
+                          sources=[x.get("source", "?") for x in raw_results
+                                   if isinstance(x, dict)])
         
         total_ms = (time.time() - t0) * 1000
         

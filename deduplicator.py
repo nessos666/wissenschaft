@@ -20,6 +20,53 @@ class SearchResult:
     relevance_note: str = ""
     quality_note: str = ""
     merged_from: list[str] = field(default_factory=list)
+    trust_score: float = 0.5
+
+
+def _as_str(value, default: str = "") -> str:
+    """Wert robust in str wandeln — None/int/Dict → default oder str()."""
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def _as_int(value, default: int = 0) -> int:
+    """Wert robust in int wandeln — 'abc'/Dict/None → default."""
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def searchresult_from_dict(r) -> SearchResult:
+    """Dict → SearchResult mit defensiver Normalisierung (Block 3).
+
+    Die Pipeline-Grenzen (orchestrator, verifier_agent) bekommen rohe externe
+    Daten — Einträge können Nicht-Dict sein (String), Felder int/None/Dict
+    statt str, Zitationen nicht-numerisch. NIE crashen (Muster: SUCHER-
+    OpenAIRE-Fix). Nicht-Dict-Einträge → None (Aufrufer überspringt).
+    """
+    if not isinstance(r, dict):
+        return None
+    return SearchResult(
+        title=_as_str(r.get("title"))[:500],
+        authors=_as_str(r.get("authors")),
+        year=_as_str(r.get("year"))[:20],
+        doi=_as_str(r.get("doi")),
+        url=_as_str(r.get("url")),
+        pdf_url=_as_str(r.get("pdf_url")),
+        source=_as_str(r.get("source"), "Unknown")[:50],
+        citations=_as_int(r.get("citations")),
+        is_oa=bool(r.get("is_oa", False)),
+        abstract=_as_str(r.get("abstract"))[:2000],
+    )
+
 
 def normalize_title(title: str) -> str:
     """Normalisiert Titel für Vergleich."""

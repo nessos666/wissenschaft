@@ -19,19 +19,15 @@ class VerifierAgent(BaseAgent):
             return self.fail(["Keine Ergebnisse zum Verifizieren"])
         
         # Roh-Daten in SearchResult konvertieren
+        # Block 3 (Robustheit): zentrale Normalisierung (deduplicator) —
+        # Einträge können Nicht-Dict sein (String), Felder int/None/Dict statt
+        # str, Zitationen nicht-numerisch. Nie crashen.
+        from deduplicator import searchresult_from_dict
         search_results = []
         for r in results_raw:
-            search_results.append(SearchResult(
-                title=r.get("title", ""),
-                authors=r.get("authors", ""),
-                year=str(r.get("year", "")),
-                doi=r.get("doi", ""),
-                url=r.get("url", ""),
-                pdf_url=r.get("pdf_url", ""),
-                source=r.get("source", "Unknown"),
-                citations=int(r.get("citations", 0)),
-                abstract=r.get("abstract", "")[:500],
-            ))
+            sr = searchresult_from_dict(r)
+            if sr is not None:
+                search_results.append(sr)
         
         # Verifizieren
         verified = self.verifier.verify_all(search_results)
