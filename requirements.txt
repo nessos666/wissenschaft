@@ -1,0 +1,6 @@
+# /wissenschaft — Abhängigkeiten
+# Kern-Tool nutzt NUR die Python-Standardbibliothek (kein pip install nötig).
+#
+# Optional (nur für qdrant_save.py — Qdrant-Vektor-Speicherung):
+# sentence-transformers
+# qdrant-client

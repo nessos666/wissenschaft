@@ -1,0 +1,22 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# --- Persönliche Recherche-Daten (Dossiers = Ergebnisse, NICHT Code) ---
+# Diese Ordner enthalten Davids Recherche-Ergebnisse — bleiben lokal im HAUPTLAGER
+*_Dossier/
+Dossiers/
+Arbeitsmarkt_ATS_Kollaps/
+
+# --- Laufzeit-Artefakte ---
+*.db
+*.log
+wissenschaft_cache.db
+
+# --- Betriebssystem ---
+.DS_Store
+Thumbs.db
