@@ -1,5 +1,7 @@
 """Tests für query_analyzer.py V2 — Boolean-Suche"""
-import sys; sys.path.insert(0, '/home/boobi/HAUPTLAGER/03_PROJEKTE/XX_WissenschaftSkill')
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from query_analyzer import analyze_query, parse_boolean
 
 def test_boolean_and():

@@ -1,6 +1,7 @@
 """Tests für formatter.py V2 — alle Export-Formate + DOI-Verifikation"""
 import sys, os, tempfile
-sys.path.insert(0, '/home/boobi/HAUPTLAGER/03_PROJEKTE/XX_WissenschaftSkill')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from formatter import (format_results, save_report, save_exports, export_bibtex,
                        export_ris, export_json, verify_doi, generate_next_searches)
 from deduplicator import SearchResult

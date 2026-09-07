@@ -1,6 +1,7 @@
 """Tests für deduplicator.py"""
 import sys
-sys.path.insert(0, '/home/boobi/HAUPTLAGER/03_PROJEKTE/XX_WissenschaftSkill')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from deduplicator import deduplicate, SearchResult, title_similarity, normalize_title
 
 def test_doi_dedup():
