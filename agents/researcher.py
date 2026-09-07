@@ -21,11 +21,18 @@ class ResearcherAgent(BaseAgent):
         self.log(f"Suche '{query[:60]}...' (Domain: {domain}, Tiefe: {depth})")
         
         try:
+            # Block 2: ECHTE Suche — Researcher fragt key-freie APIs direkt ab
+            # (statt nur Quellen zu routen). Quelle down → andere liefert.
+            max_results = {"schnell": 3, "standard": 8, "tief": 15}.get(depth, 8)
+            from sources.searcher import search as echte_suche
+            treffer = echte_suche(query, max_results=max_results)
+            
             sources = route_sources(domain, depth)
             mcp_sources = [s for s in sources if s.mcp_tool]
             direct_sources = [s for s in sources if not s.mcp_tool]
             
-            self.log(f"{len(mcp_sources)} MCP-Quellen, {len(direct_sources)} Direct-Quellen")
+            self.log(f"{len(treffer)} echte Treffer ({len(mcp_sources)} MCP-"
+                     f"{'Quelle' if len(mcp_sources)==1 else 'Quellen'} geroutet)")
             
             return self.ok({
                 "query": query,
@@ -34,6 +41,8 @@ class ResearcherAgent(BaseAgent):
                 "total_sources": len(sources),
                 "mcp_sources": [{"name": s.name, "tool": s.mcp_tool, "tier": s.tier} for s in mcp_sources],
                 "direct_sources": [{"name": s.name, "tier": s.tier} for s in direct_sources],
+                "results": treffer,  # Block 2: echte Suchergebnisse
+                "search_performed": True,
             }, duration=(time.time()-t0)*1000)
         except Exception as e:
             return self.fail([str(e)])

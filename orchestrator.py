@@ -43,6 +43,12 @@ class OrchestratorV3:
         if not r.success:
             return {"error": "Researcher fehlgeschlagen", "details": r.errors}
         
+        # Block 2: Researcher liefert echte Treffer (search_performed=True).
+        # Wenn KEINE externen raw_results gegeben sind, nutze die internen.
+        interne_treffer = r.data.get("results", []) if r.data else []
+        if raw_results is None and interne_treffer:
+            raw_results = interne_treffer
+        
         # Phase 2: Verifier
         v_input = {"results": raw_results or []}
         v = self.verifier.run(v_input)
@@ -101,11 +107,16 @@ class OrchestratorV3:
         
         total_ms = (time.time() - t0) * 1000
         
+        # Block 2: Researcher-Ergebnisse + Verifier-Details im Ergebnis führen
+        # (sonst gehen die echten Treffer für Export/Dossier verloren)
+        researcher_results = (raw_results or [])[:20]
         return {
             "pipeline_success": True,
             "cached": False,
             "query": query, "domain": domain, "depth": depth,
-            "researcher": {"sources": r.data.get("total_sources", 0)},
+            "researcher": {"sources": r.data.get("total_sources", 0),
+                           "results": researcher_results,
+                           "search_performed": bool(r.data.get("search_performed"))},
             "verifier": v.data.get("summary", {}),
             "evidence": evidence_sum,
             "synthesis": {

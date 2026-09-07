@@ -19,7 +19,18 @@ from orchestrator import OrchestratorV3
 def orch():
     # use_cache=False MUSS erzwungen werden — sonst überspringt der Cache
     # die Pipeline und die Tests testen den Cache, nicht die Robustheit!
-    return OrchestratorV3()
+    # Researcher wird gemockt (Block 2): die Robustheits-Tests prüfen die
+    # VERARBEITUNG unsauberer Daten, nicht die echte Netz-Suche.
+    orch = OrchestratorV3()
+
+    class FakeResearcher:
+        def run(self, input_data):
+            from agents import AgentResult
+            return AgentResult(agent_name="FakeResearcher", success=True,
+                               data={"results": []}, errors=[], duration_ms=1)
+
+    orch.researcher = FakeResearcher()
+    return orch
 
 
 def _run(orch, query, results):
