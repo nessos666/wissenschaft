@@ -38,8 +38,18 @@ class VerifierAgent(BaseAgent):
         # Ergebnisse serialisieren
         verified_data = []
         for vr in verified:
+            # Block 6 (einheitliches Datenmodell): ALLE Metadaten durchreichen —
+            # vorher gingen year/authors/citations/abstract/url verloren und
+            # nachgelagerte Phasen (Evidence, Dossier) hatten nur Teildaten.
             verified_data.append({
                 "title": vr.result.title,
+                "year": vr.result.year,
+                "authors": vr.result.authors,
+                "citations": vr.result.citations,
+                "abstract": vr.result.abstract,
+                "url": vr.result.url,
+                "pdf_url": vr.result.pdf_url,
+                "is_oa": vr.result.is_oa,
                 "doi": vr.result.doi,
                 "source": vr.result.source,
                 "trust_score": vr.trust_score,
