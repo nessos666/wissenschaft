@@ -51,6 +51,7 @@ def rank_results(results: list[SearchResult], depth: str = "standard",
     Relevanz (0-3) + Citations (0-3) + Recency (0-2) + Source-Trust (0-2)
     + OA (0-1.5) + Abstract (0-1). Sortiert absteigend, begrenzt nach Tiefe.
     """
+    import math
     max_citations = max((r.citations for r in results), default=1)
     current_year = 2026
 
@@ -58,9 +59,13 @@ def rank_results(results: list[SearchResult], depth: str = "standard",
         s = 0.0
         # Relevanz zur Query (Verbesserung 1 — NEU)
         s += _relevanz_score(r.title, query)
-        # Citation-Score (0-3)
+        # Citation-Score (0-3) — LOG-skaliert MIT BODEN (V1-Fix): Nenner
+        # mindestens log1p(10) — sonst geben 0-10 Zitationen bei kleinem
+        # max_citations fast volle 3 Punkte (1 Zitation = 3.0 Bug!). Erst ab
+        # ~10 Zitationen wächst der Score merklich.
+        nenner = math.log1p(max(max_citations, 10))
         if max_citations > 0:
-            s += min(r.citations / max_citations * 3, 3.0)
+            s += min(math.log1p(max(r.citations, 0)) / nenner * 3, 3.0)
         # Recency (0-2)
         try:
             year = int(r.year) if r.year else 2010
