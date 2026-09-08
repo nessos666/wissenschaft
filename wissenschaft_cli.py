@@ -22,6 +22,9 @@ def main():
     parser.add_argument("--dossier", action="store_true",
                         help="KOMPLETT: echte Suche → Pipeline → Dossier erstellen "
                              "(kein --input nötig — Researcher sucht selbst)")
+    parser.add_argument("--download", action="store_true",
+                        help="Mit --dossier: OA-PDFs der Treffer laden "
+                             "(Verbesserung 3 — pdf_url direkt, sonst Unpaywall)")
     args = parser.parse_args()
 
     if not args.query:
@@ -41,7 +44,7 @@ def main():
             print(f"  ✗ Pipeline fehlgeschlagen: {result.get('error', '?')}")
             return
         from sources.writer import erstelle_dossier
-        pfade = erstelle_dossier(result)
+        pfade = erstelle_dossier(result, download_pdfs=args.download)
         print(f"  ✅ Pipeline: success | "
               f"{len((result.get('researcher') or {}).get('results') or [])} Treffer "
               f"aus {len((result.get('researcher') or {}).get('sources_geliefert') or [])} "

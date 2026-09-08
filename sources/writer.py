@@ -105,10 +105,13 @@ def _bibtex(results: list) -> str:
     return "\n\n".join(eintraege)
 
 
-def erstelle_dossier(pipeline_ergebnis: dict, ziel=None) -> dict:
+def erstelle_dossier(pipeline_ergebnis: dict, ziel=None,
+                     download_pdfs: bool = False) -> dict:
     """Pipeline-Ergebnis → <ziel>/<Thema>_Dossier/{README.md, .bib}.
 
     ziel: Basis-Ordner (Default ~/HAUPTLAGER/XX_WissenschaftSkill).
+    download_pdfs (Verbesserung 3): lädt OA-PDFs der Treffer nach
+    <Thema>_Dossier/pdfs/ (pdf_url direkt, sonst Unpaywall über DOI).
     Liefert Dict {Dateityp: pfad}. Nie crashen.
     """
     basis = Path(ziel) if ziel else STANDARD_ZIEL
@@ -172,5 +175,24 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None) -> dict:
     bib_path = dossier_dir / f"{_slug(query)}_Evidenz.bib"
     bib_path.write_text(_bibtex(results), encoding="utf-8")
     pfade[".bib"] = str(bib_path)
+
+    # Verbesserung 3: OA-PDFs der Treffer laden (pdf_url direkt, sonst
+    # Unpaywall über DOI). Nie crashen — wenn's schiefgeht, Dossier ohne PDFs.
+    if download_pdfs and results:
+        try:
+            from sources.downloader import lade_pdfs
+            pdf_stat = lade_pdfs(results, dossier_dir,
+                                 unpaywall_email="kontakt@wissenshaft.tool")
+            if pdf_stat["geladen"]:
+                pfade["pdfs"] = pdf_stat["geladen"]
+                # PDF-Abschnitt im README nachtragen
+                pdf_zeilen = "\n".join(
+                    f"- [{Path(p).name}]({Path(p).name})"
+                    for p in pdf_stat["geladen"])
+                readme += (f"\n## PDFs ({len(pdf_stat['geladen'])} geladen)\n\n"
+                           f"{pdf_zeilen}\n")
+                readme_path.write_text(readme, encoding="utf-8")
+        except Exception:
+            pass  # PDF-Download ist Bonus — Dossier existiert trotzdem
 
     return pfade
