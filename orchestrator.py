@@ -68,6 +68,11 @@ class OrchestratorV3:
                     if sr is not None]
         roh_anzahl = len(sr_liste)  # nur valide Records
         dedupliziert = deduplicate(sr_liste) if sr_liste else []
+        # Verbesserung 1 (Relevanz-Ranking): nach Dedup nach kombinierter
+        # Metrik sortieren (Query-Titel-Match + Citations + Recency + Trust
+        # + OA). ranker.py lag seit Block 7 ungenutzt — jetzt verdrahtet.
+        from ranker import rank_results
+        dedupliziert = rank_results(dedupliziert, depth=depth, query=query)
         # Deduplizierte zurück in Dicts für Verifier (Pipeline-Vertrag)
         raw_nach_dedup = [{
             "title": sr.title, "authors": sr.authors, "year": sr.year,
