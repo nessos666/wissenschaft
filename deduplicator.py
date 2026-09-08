@@ -98,33 +98,92 @@ def _merge_duplikat(ziel: "SearchResult", dup: "SearchResult") -> None:
         ziel.is_oa = True
 
 
+# Preprint-Server (Verbesserung 2): deren Einträge sind oft die Vorab-Version
+# eines veröffentlichten Papers (CrossRef/PubMed) — beim Merge verliert der
+# Preprint, der Verlagseintrag gewinnt (behält Felder, übernimmt pdf_url).
+_PREPRINT_SERVER = {
+    "arXiv", "bioRxiv", "medRxiv", "ChemRxiv", "PsyArXiv", "engrXiv",
+    "EarthArXiv", "SocArXiv", "AfricArXiv", "SSRN", "Figshare", "Zenodo",
+}
+
+
+def _ist_preprint(r: SearchResult) -> bool:
+    return r.source in _PREPRINT_SERVER
+
+
+def _preprint_gewichtet_besser(a: SearchResult, b: SearchResult) -> bool:
+    """True wenn a der bessere (Verlags-)Eintrag ist als b (Preprint)."""
+    return (not _ist_preprint(a)) and _ist_preprint(b)
+
+
 def deduplicate(results: list[SearchResult]) -> list[SearchResult]:
-    """Entfernt Duplikate: DOI-Match zuerst, dann Titel-Fuzzy (> 0.70)."""
-    unique = []
-    seen_dois = {}
-    
+    """Entfernt Duplikate: DOI-Match, dann Preprint→Published (V2), dann
+    Titel-Fuzzy (> 0.70).
+
+    Verbesserung 2: Ein arXiv/bioRxiv-Preprint (DOI 10.48550/…) und die
+    spätere Verlags-Version (CrossRef/PubMed, anderer DOI) sind dieselbe
+    Arbeit. Erkannt über sehr ähnliche Titel (> 0.85) + mindestens ein
+    Preprint → der Verlags-Eintrag gewinnt, der Preprint wandert in
+    merged_from (pdf_url bleibt erhalten).
+    """
+    unique: list[SearchResult] = []
+    seen_dois: dict[str, SearchResult] = {}
+
+    def _titel_duplikat_finden(r: SearchResult, schwelle: float,
+                               nur_preprint_paar: bool = False):
+        """Findet existierenden Eintrag mit ähnlichem Titel (für Merge)."""
+        for u in unique:
+            if title_similarity(r.title, u.title) > schwelle:
+                if nur_preprint_paar:
+                    # Nur wenn (r oder u) Preprint — sonst kein Kreuz-DOI-Merge
+                    if not (_ist_preprint(r) or _ist_preprint(u)):
+                        continue
+                    # Gleiche Arbeit nur wenn nicht beide aus derselben Quelle
+                    # (zwei verschiedene arXiv-Paper mit ähnlichem Titel)
+                    if r.source == u.source:
+                        continue
+                return u
+        return None
+
     for r in results:
         # Stufe 1: DOI-Match
         if r.doi and r.doi in seen_dois:
             _merge_duplikat(seen_dois[r.doi], r)
             continue
-        
+
+        # Stufe 2 (V2): Preprint→Published — verschiedene DOIs, sehr ähnlicher
+        # Titel, mindestens ein Preprint → als eine Arbeit behandeln.
+        # Der Verlags-Eintrag gewinnt (Preprint wandert in merged_from).
+        if r.doi:
+            u = _titel_duplikat_finden(r, schwelle=0.85,
+                                       nur_preprint_paar=True)
+            if u is not None:
+                if _preprint_gewichtet_besser(r, u):
+                    # r ist Verlag, u ist Preprint → u durch r ersetzen
+                    # (Felder von u übernehmen wo r leer ist)
+                    _merge_duplikat(r, u)
+                    unique[unique.index(u)] = r
+                    seen_dois[r.doi] = r
+                else:
+                    # r ist Preprint (oder gleichrangig) → in u mergen
+                    _merge_duplikat(u, r)
+                continue
+
         if r.doi:
             seen_dois[r.doi] = r
             unique.append(r)
             continue
-        
-        # Kein DOI — nach Titel-Duplikaten suchen
+
+        # Kein DOI — nach Titel-Duplikaten suchen (Fuzzy)
         is_dup = False
-        for u in unique:
-            if title_similarity(r.title, u.title) > 0.70:
-                _merge_duplikat(u, r)
-                is_dup = True
-                break
-        
+        u = _titel_duplikat_finden(r, schwelle=0.70)
+        if u is not None:
+            _merge_duplikat(u, r)
+            is_dup = True
+
         if not is_dup:
             unique.append(r)
-    
+
     return unique
 
 if __name__ == "__main__":
