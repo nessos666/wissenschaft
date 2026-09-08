@@ -109,3 +109,19 @@ def test_zehn_neue_quellen_aktiv():
 
 def test_gesamt_28_quellen():
     assert len(papersearch.ALL_SOURCES) >= 28
+
+
+# ---------- Verbesserung 4: Abstract-Anreicherung ----------
+
+def test_abstract_anreicherung_ueberspringt_vorhandene():
+    """Treffer MIT Abstract werden nicht angefasst (kein Netz)."""
+    p = [{"doi": "10.1/x", "abstract": "Schon da", "title": "A"}]
+    out = papersearch._reichere_abstracts_an(p, timeout_s=0.1)
+    assert out[0]["abstract"] == "Schon da"
+
+
+def test_abstract_anreicherung_ohne_doi_kein_netz():
+    """Ohne DOI → kein Nachschlag, bleibt leer (kein Crash)."""
+    p = [{"doi": "", "abstract": "", "title": "Kein DOI"}]
+    out = papersearch._reichere_abstracts_an(p, timeout_s=0.1)
+    assert out[0]["abstract"] == ""

@@ -149,6 +149,56 @@ def _search_eine(quelle, query: str, max_results: int) -> list:
         return []
 
 
+def _reichere_abstracts_an(papers: list, timeout_s: float = 8.0) -> list:
+    """Verbesserung 4: Für Treffer mit DOI aber ohne Abstract den CrossRef-
+    Metadaten-Nachschlag machen (JATS-XML-Abstract). Parallel, kurz.
+    Nie crashen — Treffer ohne Abstract bleiben einfach leer.
+    """
+    import re as _re
+    beduerftig = [p for p in papers
+                  if p.get("doi") and not (p.get("abstract") or "").strip()]
+    if not beduerftig:
+        return papers
+
+    def _lade(doi: str) -> str:
+        try:
+            import requests as _req
+            r = _req.get(f"https://api.crossref.org/works/{doi}",
+                         headers={"User-Agent":
+                                  "WissenschaftTool/4.0 (mailto:kontakt@wissenshaft.tool)"},
+                         timeout=min(timeout_s, 8.0))
+            if r.status_code != 200:
+                return ""
+            abstr = (r.json().get("message", {}).get("abstract") or "")
+            # JATS-XML-Tags grob entfernen
+            abstr = _re.sub(r"<[^>]+>", " ", abstr)
+            return _re.sub(r"\s+", " ", abstr).strip()[:1000]
+        except Exception:
+            return ""
+
+    async def _lauf():
+        import asyncio as _aio
+        tasks = {id(p): _aio.get_event_loop().run_in_executor(
+                     _EXECUTOR, _lade, p["doi"]) for p in beduerftig}
+        ergebnis = {}
+        for pid, t in tasks.items():
+            try:
+                ergebnis[pid] = await _aio.wait_for(t, timeout=min(timeout_s, 8.0))
+            except Exception:
+                ergebnis[pid] = ""
+        return ergebnis
+
+    try:
+        gefuellt = asyncio.run(_lauf())
+    except Exception:
+        return papers
+    for p in beduerftig:
+        txt = gefuellt.get(id(p), "")
+        if txt:
+            p["abstract"] = txt
+    return papers
+
+
 def search_papers(query: str, max_results_per_source: int = 3,
                   sources: str = "all", timeout_s: float = 45.0) -> dict:
     """Multi-Quellen-Suche (21 Quellen parallel, dedupliziert).
@@ -216,6 +266,8 @@ def search_papers(query: str, max_results_per_source: int = 3,
             if i < len(treffer_q):
                 gemischt.append(treffer_q[i])
     papers = _dedupe(gemischt)  # bereits normiert in _search_eine
+    # Verbesserung 4: fehlende Abstracts per CrossRef-Nachschlag anreichern
+    papers = _reichere_abstracts_an(papers)
     return {"query": query, "sources_used": genutzt, "total": len(papers),
             "papers": papers, "errors": fehler}
 
