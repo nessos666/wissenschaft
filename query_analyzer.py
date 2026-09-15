@@ -16,14 +16,40 @@ DOMAIN_KEYWORDS = {
 }
 
 SYNONYM_MAP = {
+    # --- Trading (bestehend) ---
     "fvg": ["fair value gap", "imbalance", "price gap"],
     "ict": ["inner circle trader", "smart money concepts", "smc"],
     "nq": ["nasdaq-100 futures", "e-mini nasdaq"],
     "es": ["s&p 500 futures", "e-mini s&p"],
+    # --- Wissenschaftlich (Verbesserung 6: Abkürzungen ausschreiben, damit
+    # Preprint-Server + Volltext-Suchen die Langform finden) ---
+    "emdr": ["eye movement desensitization and reprocessing"],
+    "ptbs": ["posttraumatic stress disorder", "post-traumatic stress disorder"],
+    "ptsd": ["posttraumatic stress disorder", "post-traumatic stress disorder"],
+    "adhs": ["attention deficit hyperactivity disorder"],
+    "adhd": ["attention deficit hyperactivity disorder"],
+    "llm": ["large language model"],
+    "ki": ["artificial intelligence"],
+    "ai": ["artificial intelligence"],
+    "ml": ["machine learning"],
+    "nlp": ["natural language processing"],
+    "rct": ["randomized controlled trial"],
+    "xrd": ["x-ray diffraction"],
+    "sem": ["scanning electron microscopy"],
+    "tem": ["transmission electron microscopy"],
+    "nmr": ["nuclear magnetic resonance"],
+    "ftir": ["fourier transform infrared spectroscopy"],
+    "hplc": ["high performance liquid chromatography"],
+    "pcr": ["polymerase chain reaction"],
+    "bet": ["brunauer emmett teller"],
+    "cec": ["cation exchange capacity"],
+    "toc": ["total organic carbon"],
+    "cod": ["chemical oxygen demand"],
+    # --- Allgemein ---
     "microbiome": ["microbial community", "soil bacteria", "rhizosphere"],
-    "pyscript": ["python in browser", "webassembly python", "pyodide"],
-    "remote work": ["work from home", "telework", "distributed work"],
     "meta analysis": ["systematic review", "meta-analysis", "evidence synthesis"],
+    "remote work": ["work from home", "telework", "distributed work"],
+    "pyscript": ["python in browser", "webassembly python", "pyodide"],
 }
 
 @dataclass
@@ -117,6 +143,30 @@ def analyze_query(query: str) -> StructuredQuery:
         boolean_structure=bool_struct,
         excluded_terms=excluded,
     )
+
+
+def erweitere_query(query: str, max_varianten: int = 2) -> list[str]:
+    """Verbesserung 6: Query mit Abkürzung → zusätzliche Suchvarianten.
+
+    'posttraumatic growth EMDR' → ['posttraumatic growth eye movement
+    desensitization and reprocessing']. Die Langform in der Original-
+    Wortstellung, damit Volltext-Suchen der Quellen sie finden.
+    Liefert NUR die Varianten (ohne das Original) — max 2.
+    """
+    if not query or not query.strip():
+        return []
+    wörter = query.strip().split()
+    varianten = []
+    for w in wörter:
+        schlüssel = w.lower().strip(".,;:()[]")
+        if schlüssel in SYNONYM_MAP:
+            for langform in SYNONYM_MAP[schlüssel][:1]:  # erste Langform
+                neu = [langform if x.lower().strip(".,;:()[]") == schlüssel
+                       else x for x in wörter]
+                varianten.append(" ".join(neu))
+                if len(varianten) >= max_varianten:
+                    return varianten
+    return varianten
 
 
 if __name__ == "__main__":

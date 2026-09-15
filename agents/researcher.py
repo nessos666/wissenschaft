@@ -27,6 +27,27 @@ class ResearcherAgent(BaseAgent):
             from sources.searcher import search as echte_suche
             treffer = echte_suche(query, max_results=max_results)
 
+            # Verbesserung 6: Query-Erweiterung — NUR wenn die Hauptsuche
+            # wenig liefert (< 5 Treffer). Ehrlicher Befund: die Langform
+            # kann Rauschen bringen (EMDR → 'eye movement' matcht auch
+            # Eye-Tracking-Studien), daher nur als Lücken-Füller.
+            try:
+                from query_analyzer import erweitere_query
+                if len(treffer) < 5:
+                    varianten = erweitere_query(query)
+                    for variante in varianten:
+                        extra = echte_suche(variante, max_results=max_results // 2)
+                        vorhandene_titel = {(t.get("title") or "").lower()
+                                            for t in treffer}
+                        neu = [e for e in extra
+                               if (e.get("title") or "").lower() not in vorhandene_titel]
+                        if neu:
+                            treffer = treffer + neu
+                            self.log(f"Query-Erweiterung '{variante[:40]}…': "
+                                     f"+{len(neu)} Treffer")
+            except Exception:
+                pass  # Erweiterung ist Bonus
+
             # Verbesserung 5: Zitations-Snowballing nur bei Tiefe 'tief' —
             # für die Top-3-Treffer Referenzen (rückwärts, CrossRef) +
             # Zitierende (vorwärts, S2) holen und anhängen. Findet klassische

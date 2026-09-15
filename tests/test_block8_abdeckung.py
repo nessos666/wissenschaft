@@ -96,3 +96,30 @@ def test_clusterer_erzeugt_bericht():
 def test_clusterer_leere_liste_kein_crash():
     out = generate_cluster_report([])
     assert isinstance(out, str) or out is None
+
+
+# ---------- Verbesserung 6: Query-Erweiterung ----------
+
+def test_erweitere_query_abkuerzung():
+    """EMDR → Langform in Original-Wortstellung."""
+    from query_analyzer import erweitere_query
+    v = erweitere_query("posttraumatic growth EMDR")
+    assert len(v) == 1
+    assert "eye movement desensitization and reprocessing" in v[0]
+    assert v[0].startswith("posttraumatic growth")
+
+
+def test_erweitere_query_ohne_abkuerzung():
+    from query_analyzer import erweitere_query
+    assert erweitere_query("bentonite clay water retention") == []
+
+
+def test_erweitere_query_leer():
+    from query_analyzer import erweitere_query
+    assert erweitere_query("") == []
+
+
+def test_erweitere_query_ptbs_deutsch():
+    from query_analyzer import erweitere_query
+    v = erweitere_query("PTBS Therapie")
+    assert v and "posttraumatic stress disorder" in v[0]
