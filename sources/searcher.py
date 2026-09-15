@@ -217,6 +217,40 @@ def search(query: str, max_results: int = 8) -> list[dict]:
     return ergebnisse
 
 
+def search_mit_info(query: str, max_results: int = 8) -> tuple:
+    """Verbesserung 9: wie search(), liefert zusätzlich Transparenz-Info.
+
+    Returns (treffer, info) mit
+      info = {"versucht": N, "geliefert": [quellen...],
+              "ohne_antwort": [quellen...]}
+    """
+    info = {"versucht": 0, "geliefert": [], "ohne_antwort": []}
+    try:
+        from sources.papersearch import ALL_SOURCES
+        info["versucht"] = len(ALL_SOURCES)
+    except Exception:
+        pass
+
+    if multi_suche is not None:
+        try:
+            erg = multi_suche(query, max_results_per_source=max(3, max_results // 3),
+                              timeout_s=300.0)
+            papers = erg.get("papers", [])
+            info["geliefert"] = sorted(erg.get("sources_used", []))
+            info["ohne_antwort"] = sorted((erg.get("errors") or {}).keys())
+            if papers:
+                return papers[:max_results], info
+        except Exception:
+            pass
+
+    # Fallback (Bibliothek fehlt/keine Treffer)
+    treffer = search(query, max_results=max_results)
+    if treffer:
+        info["geliefert"] = sorted({t.get("source", "?") for t in treffer
+                                    if isinstance(t, dict)})
+    return treffer, info
+
+
 if __name__ == "__main__":
     import sys
     thema = sys.argv[1] if len(sys.argv) > 1 else "quantum computing"

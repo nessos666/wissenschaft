@@ -47,7 +47,8 @@ class OrchestratorV3:
             # Schema-identisches Minimal-Ergebnis: Suche entfällt, Rest läuft
             r = type("R", (), {"success": True, "data": {"results": raw_results or [],
                 "total_sources": 0, "sources_versucht": 0,
-                "sources_geliefert": [], "search_performed": False}})()
+                "sources_geliefert": [], "sources_ohne_antwort": [],
+                "search_performed": False}})()
         else:
             r = self.researcher.run({"query": query, "depth": depth, "domain": domain})
             if not r.success:
@@ -171,6 +172,7 @@ class OrchestratorV3:
             "researcher": {"sources": r.data.get("total_sources", 0),
                            "sources_versucht": r.data.get("sources_versucht", 0),
                            "sources_geliefert": r.data.get("sources_geliefert", []),
+                           "sources_ohne_antwort": r.data.get("sources_ohne_antwort", []),
                            "results": researcher_results,
                            "search_performed": bool(r.data.get("search_performed"))},
             "verifier": v.data.get("summary", {}),

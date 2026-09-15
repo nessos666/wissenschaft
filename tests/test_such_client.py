@@ -123,3 +123,23 @@ def test_search_struktur_offline(monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", kaputt)
     out = searcher.search("bentonite", max_results=5)
     assert out == []
+
+
+# ---------- Verbesserung 9: search_mit_info ----------
+
+def test_search_mit_info_liefert_tuple(monkeypatch):
+    """search_mit_info → (treffer, info) mit versucht/geliefert/ohne_antwort."""
+    monkeypatch.setattr(searcher, "multi_suche", None)
+    monkeypatch.setattr(searcher, "search", lambda q, max_results=8: [
+        {"title": "A", "source": "CrossRef", "doi": "", "url": ""}])
+    treffer, info = searcher.search_mit_info("test", max_results=5)
+    assert isinstance(treffer, list) and isinstance(info, dict)
+    assert "ohne_antwort" in info and "geliefert" in info and "versucht" in info
+    assert info["geliefert"] == ["CrossRef"]
+
+
+def test_search_mit_info_leer_kein_crash(monkeypatch):
+    monkeypatch.setattr(searcher, "multi_suche", None)
+    monkeypatch.setattr(searcher, "search", lambda q, max_results=8: [])
+    treffer, info = searcher.search_mit_info("x", max_results=3)
+    assert treffer == [] and info["ohne_antwort"] == []

@@ -150,6 +150,7 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None,
     depth = pipeline_ergebnis.get("depth") or "standard"
     quellen_geliefert = res.get("sources_geliefert") or []
     quellen_versucht = res.get("sources_versucht") or "?"
+    quellen_ohne = res.get("sources_ohne_antwort") or []
 
     dossier_dir = basis / f"{_slug(query)}_Dossier"
     dossier_dir.mkdir(parents=True, exist_ok=True)
@@ -196,6 +197,10 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None,
 
 ---
 *Automatisch erzeugt von /wissenschaft (Pipeline V4) — {date_str}*
+
+## Quellen ohne Antwort in diesem Lauf
+
+{chr(10).join('- ' + q for q in quellen_ohne) if quellen_ohne else '_Alle aktivierten Quellen antworteten (oder lieferten keine Treffer zum Thema)._'}
 """
     pfade = {}
     readme_path = dossier_dir / "README.md"

@@ -24,8 +24,8 @@ class ResearcherAgent(BaseAgent):
             # Block 2: ECHTE Suche — Researcher fragt key-freie APIs direkt ab
             # (statt nur Quellen zu routen). Quelle down → andere liefert.
             max_results = {"schnell": 5, "standard": 15, "tief": 25}.get(depth, 15)
-            from sources.searcher import search as echte_suche
-            treffer = echte_suche(query, max_results=max_results)
+            from sources.searcher import search_mit_info
+            treffer, such_info = search_mit_info(query, max_results=max_results)
 
             # Verbesserung 6: Query-Erweiterung — NUR wenn die Hauptsuche
             # wenig liefert (< 5 Treffer). Ehrlicher Befund: die Langform
@@ -36,7 +36,7 @@ class ResearcherAgent(BaseAgent):
                 if len(treffer) < 5:
                     varianten = erweitere_query(query)
                     for variante in varianten:
-                        extra = echte_suche(variante, max_results=max_results // 2)
+                        extra, _ = search_mit_info(variante, max_results=max_results // 2)
                         vorhandene_titel = {(t.get("title") or "").lower()
                                             for t in treffer}
                         neu = [e for e in extra
@@ -100,6 +100,7 @@ class ResearcherAgent(BaseAgent):
                 "total_sources": len(sources),
                 "sources_versucht": versucht,
                 "sources_geliefert": gelieferte,
+                "sources_ohne_antwort": such_info.get("ohne_antwort", []),
                 "mcp_sources": [{"name": s.name, "tool": s.mcp_tool, "tier": s.tier} for s in mcp_sources],
                 "direct_sources": [{"name": s.name, "tier": s.tier} for s in direct_sources],
                 "results": treffer,  # Block 2: echte Suchergebnisse
