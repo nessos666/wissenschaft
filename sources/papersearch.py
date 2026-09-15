@@ -75,11 +75,11 @@ from sources.quellen_extra2 import EXTRA_QUELLEN_2
 from sources.quellen_extra3 import EXTRA_QUELLEN_3
 from sources.quellen_extra4 import EXTRA_QUELLEN_4
 from sources.quellen_extra5 import EXTRA_QUELLEN_5
+from sources.quellen_extra6 import EXTRA_QUELLEN_6
 
-EXTRA_QUELLEN.update(EXTRA_QUELLEN_2)
-EXTRA_QUELLEN.update(EXTRA_QUELLEN_3)
-EXTRA_QUELLEN.update(EXTRA_QUELLEN_4)
-EXTRA_QUELLEN.update(EXTRA_QUELLEN_5)
+for _extra in (EXTRA_QUELLEN_2, EXTRA_QUELLEN_3, EXTRA_QUELLEN_4,
+               EXTRA_QUELLEN_5, EXTRA_QUELLEN_6):
+    EXTRA_QUELLEN.update(_extra)
 
 # Gesamt-Reihenfolge (Qualitäts-Priorität): kuratierte DOI-Quellen zuerst,
 # dann Preprints, dann die neuen Domänen-Quellen.

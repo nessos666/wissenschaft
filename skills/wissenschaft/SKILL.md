@@ -15,7 +15,7 @@ trigger_keywords:
 
 # /wissenschaft V4 — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-**84 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
+**99 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
 OpenAlex, PMC, CORE, DOAJ, OpenAIRE, Zenodo, DBLP, HAL, SSRN, CiteSeerX,
 arXiv, bioRxiv, medRxiv, IACR, ChemRxiv, DataCite, INSPIRE-HEP, COD,
 Figshare, PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv,
@@ -27,7 +27,9 @@ PDB, Reactome, Gene Ontology, GBIF, Protein Atlas, DOAB, ORCID, ROR,
 NCBI Nucleotide/Protein/SRA/Assembly/BioProject/BioSample,
 ChEBI, PDBe, ENA, OLS4,
 npm, CRAN, Codeberg, Docker Hub, Maven, Packagist, SciPost,
-WHO ICTRP, Dataverse, Gutenberg, Wikisource, Standard Ebooks, Europeana)
+WHO ICTRP, Dataverse, Gutenberg, Wikisource, Standard Ebooks, Europeana,
+crates.io, NuGet, RubyGems, Hackage, Go, NIST, RFC, W3C, PubChem,
+OpenCitations, EuDML, CERN CDS, DESY, NCI PDQ, EU-CTR)
 + 4-Agenten-Pipeline (Researcher → Verifier → Synthesis → Reviewer)
 + PRISMA-Statistik + Dossier (README + BibTeX + optional PDFs).
 Läuft komplett lokal, ohne API-Keys. Code: `12_Wissenschaft_Tool/` (Git).
@@ -58,7 +60,7 @@ Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
 ### 2. Ergebnis
 Dossier unter `~/HAUPTLAGER/XX_WissenschaftSkill/<THEMA>_Dossier/`:
 - `README.md` — PRISMA-Flowchart, Qualitäts-Tabelle (DOI ✓ / PDF / Zit. / Trust),
-  Quellen-Transparenz („X von 84 aktiv"), Quellen ohne Antwort
+  Quellen-Transparenz („X von 99 aktiv"), Quellen ohne Antwort
 - `*_Evidenz.bib` — BibTeX
 - `pdfs/` — falls `--download`
 

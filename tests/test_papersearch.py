@@ -190,3 +190,17 @@ def test_runde5_quellen():
 
 def test_gesamt_mindestens_84_quellen():
     assert len(papersearch.ALL_SOURCES) >= 84
+
+
+# ---------- Runde 6: Pakete/Standards/Chemie/Physik/Medizin ----------
+
+def test_runde6_quellen():
+    neue = {"crates", "nuget", "rubygems", "hackage", "gomodules",
+            "nist_webbook", "rfc", "w3c", "pubchem", "opencitations",
+            "eudml", "cern_cds", "desy", "nci_pdq", "eu_ctr"}
+    assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_gesamt_mindestens_95_quellen():
+    assert len(papersearch.ALL_SOURCES) >= 95
