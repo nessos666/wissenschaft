@@ -163,3 +163,16 @@ def test_runde3_quellen():
 
 def test_gesamt_mindestens_60_quellen():
     assert len(papersearch.ALL_SOURCES) >= 60
+
+
+# ---------- Runde 4: NCBI- + EBI-Suite (Labor) ----------
+
+def test_runde4_ncbi_ebi():
+    neue = {"nucleotide", "protein", "sra", "assembly", "bioproject",
+            "biosample", "chebi", "pdbe", "ena", "ols4"}
+    assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_gesamt_mindestens_70_quellen():
+    assert len(papersearch.ALL_SOURCES) >= 70
