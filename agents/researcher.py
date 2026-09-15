@@ -26,6 +26,25 @@ class ResearcherAgent(BaseAgent):
             max_results = {"schnell": 5, "standard": 15, "tief": 25}.get(depth, 15)
             from sources.searcher import search as echte_suche
             treffer = echte_suche(query, max_results=max_results)
+
+            # Verbesserung 5: Zitations-Snowballing nur bei Tiefe 'tief' —
+            # für die Top-3-Treffer Referenzen (rückwärts, CrossRef) +
+            # Zitierende (vorwärts, S2) holen und anhängen. Findet klassische
+            # Schlüsselwerke, die die Query-Suche verpasst.
+            if depth == "tief" and treffer:
+                try:
+                    from sources.snowball import snowball
+                    zusatz = snowball(treffer, max_seeds=3, pro_seed=6)
+                    if zusatz:
+                        vorhandene = {(t.get("title") or "").lower()
+                                      for t in treffer}
+                        neu = [z for z in zusatz
+                               if (z.get("title") or "").lower() not in vorhandene]
+                        treffer = treffer + neu
+                        self.log(f"Snowballing: +{len(neu)} Papers "
+                                 f"(Referenzen/Zitierend)")
+                except Exception:
+                    pass  # Snowballing ist Bonus
             
             sources = []
             try:
