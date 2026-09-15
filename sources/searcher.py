@@ -230,12 +230,16 @@ def search_mit_info(query: str, max_results: int = 8,
               "ohne_antwort": [quellen...]}
     """
     info = {"versucht": 0, "geliefert": [], "ohne_antwort": []}
-    try:
-        from sources.papersearch import ALL_SOURCES
-        info["versucht"] = (len([q.strip() for q in nur_quellen.split(",") if q.strip()])
-                            if nur_quellen else len(ALL_SOURCES))
-    except Exception:
-        pass
+    # versucht: Quellen-Auswahl zählt immer (importunabhängig); ohne Auswahl
+    # die Gesamtzahl der Brücke, falls verfügbar.
+    if nur_quellen:
+        info["versucht"] = len([q for q in nur_quellen.split(",") if q.strip()])
+    else:
+        try:
+            from sources.papersearch import ALL_SOURCES
+            info["versucht"] = len(ALL_SOURCES)
+        except Exception:
+            pass
 
     if multi_suche is not None:
         try:
