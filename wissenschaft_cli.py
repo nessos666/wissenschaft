@@ -25,6 +25,10 @@ def main():
     parser.add_argument("--download", action="store_true",
                         help="Mit --dossier: OA-PDFs der Treffer laden "
                              "(Verbesserung 3 — pdf_url direkt, sonst Unpaywall)")
+    parser.add_argument("--jahr-von", type=str, default="",
+                        help="Nur Treffer ab diesem Jahr (Verbesserung 8)")
+    parser.add_argument("--jahr-bis", type=str, default="",
+                        help="Nur Treffer bis zu diesem Jahr (Verbesserung 8)")
     args = parser.parse_args()
 
     if not args.query:
@@ -39,7 +43,8 @@ def main():
         print(f"🔬 /wissenschaft — Komplett-Recherche: '{args.query}' (Tiefe: {args.tiefe})")
         orch = Orchestrator()
         result = orch.run_pipeline(query=args.query, depth=args.tiefe,
-                                   raw_results=None, use_cache=False)
+                                   raw_results=None, use_cache=False,
+                                   jahr_von=args.jahr_von, jahr_bis=args.jahr_bis)
         if not result.get("pipeline_success"):
             print(f"  ✗ Pipeline fehlgeschlagen: {result.get('error', '?')}")
             return

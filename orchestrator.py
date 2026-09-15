@@ -22,7 +22,8 @@ class OrchestratorV3:
         self.cache = ResponseCache()
     
     def run_pipeline(self, query: str, depth: str = "standard", domain: str = None,
-                     raw_results: list[dict] = None, use_cache: bool = True) -> dict:
+                     raw_results: list[dict] = None, use_cache: bool = True,
+                     jahr_von: str = "", jahr_bis: str = "") -> dict:
         t0 = time.time()
         
         # Cache-Check — Abschluss-Review F5: früher early-return mit Mini-Schema
@@ -67,6 +68,26 @@ class OrchestratorV3:
         sr_liste = [sr for sr in (searchresult_from_dict(x) for x in (raw_results or []))
                     if sr is not None]
         roh_anzahl = len(sr_liste)  # nur valide Records
+        # Verbesserung 8: Zeitraum-Filter (--jahr-von/--jahr-bis) — lokale
+        # Filterung vor Dedup/Ranking. Papers ohne Jahr bleiben drin
+        # (nicht fälschlich ausschließen).
+        if jahr_von or jahr_bis:
+            def _im_zeitraum(r):
+                j = str(getattr(r, "year", "") or "").strip()
+                if not j.isdigit():
+                    return True  # unbekanntes Jahr → nicht filtern
+                if jahr_von and j < str(jahr_von):
+                    return False
+                if jahr_bis and j > str(jahr_bis):
+                    return False
+                return True
+            vorher = len(sr_liste)
+            sr_liste = [r for r in sr_liste if _im_zeitraum(r)]
+            if len(sr_liste) != vorher:
+                import logging
+                logging.getLogger("wissenschaft").info(
+                    f"Zeitraum-Filter {jahr_von or '…'}-{jahr_bis or '…'}: "
+                    f"{vorher} → {len(sr_liste)} Treffer")
         dedupliziert = deduplicate(sr_liste) if sr_liste else []
         # Verbesserung 1 (Relevanz-Ranking): nach Dedup nach kombinierter
         # Metrik sortieren (Query-Titel-Match + Citations + Recency + Trust

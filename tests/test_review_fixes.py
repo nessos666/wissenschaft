@@ -119,3 +119,49 @@ def test_verifier_budget_kuerzt(monkeypatch):
     assert dauer < 0.2, f"Budget griff nicht — dauerte {dauer:.2f}s"
     assert any("Budget" in w for vr in out for w in vr.warnings), \
         "Budget-Warnung fehlt — Budget griff nicht"
+
+
+# ---------- Verbesserung 8: Zeitraum-Filter ----------
+
+def test_zeitraum_filter_grenzen(monkeypatch):
+    """jahr_von/jahr_bis filtern Treffer; unbekanntes Jahr bleibt."""
+    orch = OrchestratorV3()
+
+    class FakeResearcher:
+        def run(self, input_data):
+            from agents import AgentResult
+            return AgentResult(agent_name="Fake", success=True,
+                               data={"results": []}, errors=[])
+
+    orch.researcher = FakeResearcher()
+    r = orch.run_pipeline(
+        "zeitraum test", depth="standard", raw_results=[
+            {"title": "Alt 2010", "year": "2010", "source": "CrossRef"},
+            {"title": "Mittel 2020", "year": "2020", "source": "CrossRef"},
+            {"title": "Neu 2025", "year": "2025", "source": "CrossRef"},
+            {"title": "Ohne Jahr", "year": "", "source": "CrossRef"},
+        ], use_cache=False, jahr_von="2015", jahr_bis="2024")
+    treffer = (r.get("researcher") or {}).get("results") or []
+    titel = [t["title"] for t in treffer]
+    assert "Alt 2010" not in titel, "2010 muss raus"
+    assert "Neu 2025" not in titel, "2025 muss raus"
+    assert "Mittel 2020" in titel
+    assert "Ohne Jahr" in titel, "unbekanntes Jahr bleibt"
+
+
+def test_zeitraum_filter_ohne_grenzen():
+    """Ohne jahr_von/jahr_bis bleibt alles."""
+    orch = OrchestratorV3()
+
+    class FakeResearcher:
+        def run(self, input_data):
+            from agents import AgentResult
+            return AgentResult(agent_name="Fake", success=True,
+                               data={"results": []}, errors=[])
+
+    orch.researcher = FakeResearcher()
+    r = orch.run_pipeline("x", depth="standard", raw_results=[
+        {"title": "A", "year": "1990", "source": "CrossRef"},
+        {"title": "B", "year": "2025", "source": "CrossRef"},
+    ], use_cache=False)
+    assert len((r.get("researcher") or {}).get("results") or []) == 2
