@@ -149,3 +149,17 @@ def test_mathe_und_buecher():
 
 def test_gesamt_mindestens_45_quellen():
     assert len(papersearch.ALL_SOURCES) >= 45
+
+
+# ---------- Runde 3: Finance/Regional/Bio-Vertiefung/Archive ----------
+
+def test_runde3_quellen():
+    neue = {"worldbank", "nber", "repec", "cftc", "redalyc", "jstage",
+            "cinii", "ajol", "pdb", "reactome", "geneontology", "gbif",
+            "proteinatlas", "doab", "orcid", "ror"}
+    assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_gesamt_mindestens_60_quellen():
+    assert len(papersearch.ALL_SOURCES) >= 60
