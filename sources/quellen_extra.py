@@ -201,6 +201,12 @@ def suche_figshare(query: str, max_results: int = 5) -> list:
 _OSF_NAMEN = {
     "psyarxiv": "PsyArXiv", "engrxiv": "engrXiv", "eartharxiv": "EarthArXiv",
     "socarxiv": "SocArXiv", "africarxiv": "AfricArXiv",
+    # Weitere OSF-Communities (jede ist ein eigener Preprint-Server)
+    "medarxiv": "medRxiv-OSF", "edarxiv": "EdArXiv",
+    "nutrixiv": "NutriXiv", "sportrxiv": "SportRxiv",
+    "lawarxiv": "LawArXiv", "paleorxiv": "PaleoArXiv",
+    "arabixiv": "Arabixiv", "marxiv": "MarXiv", "inarxiv": "INA-Rxiv",
+    "thesiscommons": "Thesis Commons", "ecsarxiv": "ECSarXiv",
 }
 
 # Registry: erst die direkt definierten Quellen, dann OSF-Communities
@@ -245,6 +251,31 @@ def _suche_osf_provider(provider: str, label: str):
 
 for _p, _l in _OSF_NAMEN.items():
     EXTRA_QUELLEN[_p] = _suche_osf_provider(_p, _l)
+
+
+@_kaputt_abfangen
+def suche_osf_nodes(query: str, max_results: int = 5) -> list:
+    """OSF-Projekte (Forschungsdaten/Projekte, nicht Preprints)."""
+    r = requests.get("https://api.osf.io/v2/nodes/",
+                     params={"filter[title]": query, "page[size]": max_results},
+                     headers=HEADERS, timeout=TIMEOUT)
+    aus = []
+    for d in (r.json().get("data") or []):
+        att = d.get("attributes") or {}
+        titel = (att.get("title") or "").strip()
+        if not titel:
+            continue
+        aus.append({
+            "title": f"OSF-Projekt: {titel}"[:500],
+            "year": (att.get("date_created") or "")[:4], "doi": "",
+            "url": f"https://osf.io/{d.get('id', '')}/" if d.get("id") else "",
+            "pdf_url": "", "source": "OSF Projekte", "citations": 0,
+            "abstract": (att.get("description") or "")[:600], "authors": "",
+        })
+    return aus[:max_results]
+
+
+EXTRA_QUELLEN["osf_nodes"] = suche_osf_nodes
 
 
 # ---------- Registry für die Brücke ----------

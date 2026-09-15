@@ -227,7 +227,23 @@ def suche_eu_ctr(query, max_results=5):
     return [_e(t, "https://www.clinicaltrialsregister.eu/", "EU-CTR") for t in titel[:max_results]]
 
 
+@_safe
+def suche_metabolights(query, max_results=5):
+    """MetaboLights (EBI) — Metabolomik-Studien (Labor)."""
+    r = requests.get("https://www.ebi.ac.uk/metabolights/ws/studies/",
+                     headers={**HEADERS, "Accept": "application/json"}, timeout=TIMEOUT)
+    if r.status_code != 200:
+        return []
+    d = r.json()
+    studies = d.get("content", d) if isinstance(d, dict) else d
+    return [_e(f"MetaboLights-Studie: {x.get('studyIdentifier') or x.get('study_id') or query}",
+               f"https://www.ebi.ac.uk/metabolights/{x.get('studyIdentifier') or ''}",
+               "MetaboLights", abstract=str(x.get("title") or x.get("description") or "")[:300])
+            for x in (studies or [])[:max_results]]
+
+
 EXTRA_QUELLEN_6 = {
+    "metabolights": suche_metabolights,
     "crates": suche_crates, "nuget": suche_nuget, "rubygems": suche_rubygems,
     "hackage": suche_hackage, "gomodules": suche_gomodules,
     "nist_webbook": suche_nist_webbook, "rfc": suche_rfc, "w3c": suche_w3c,

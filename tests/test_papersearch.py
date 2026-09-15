@@ -204,3 +204,21 @@ def test_runde6_quellen():
 
 def test_gesamt_mindestens_95_quellen():
     assert len(papersearch.ALL_SOURCES) >= 95
+
+
+# ---------- Runde 7: Förderdatenbanken, Ökologie, Medien, OSF-Erweiterung ----------
+
+def test_runde7_quellen():
+    neue = {"nih_reporter", "cordis", "nsf", "alphafold", "mgnify",
+            "stringdb", "inaturalist", "dataone", "dspace_mit", "ietf",
+            "acl_anthology", "bioconductor", "sourceforge", "wikipedia",
+            "wikimedia_commons", "wikibooks", "wikiversity", "openedition",
+            "dialnet", "metabolights", "osf_nodes"}
+    assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_ziel_130_quellen_erreicht():
+    """Davids Ziel: mindestens 130 Quellen."""
+    assert len(papersearch.ALL_SOURCES) >= 130, \
+        f"nur {len(papersearch.ALL_SOURCES)} Quellen"
