@@ -105,6 +105,30 @@ def _bibtex(results: list) -> str:
     return "\n\n".join(eintraege)
 
 
+def _qualitaets_tabelle(results: list, verifier_detail: list) -> str:
+    """Verbesserung 7: Übersichtstabelle mit Qualitäts-Spalten —
+    DOI-verifiziert | OA-PDF | Citations | Trust je Paper."""
+    if not results:
+        return ""
+    detail = {}
+    for v in (verifier_detail or []):
+        if isinstance(v, dict):
+            detail[(v.get("title") or "").lower()] = v
+    zeilen = ["| # | Titel (Jahr) | Quelle | DOI ✓ | PDF | Zit. | Trust |",
+              "|---|---|---|---|---|---|---|"]
+    for i, r in enumerate(results[:25], 1):
+        v = detail.get((r.get("title") or "").lower(), {})
+        doi_ok = "✓" if v.get("doi_verified") else ("–" if not r.get("doi") else "✗")
+        pdf = "✓" if r.get("pdf_url") else "–"
+        trust = v.get("trust_score")
+        trust_s = f"{trust:.2f}" if isinstance(trust, (int, float)) else "–"
+        titel = (r.get("title") or "")[:70].replace("|", "/")
+        zeilen.append(f"| {i} | {titel} ({r.get('year') or '?'}) | "
+                      f"{r.get('source') or '?'} | {doi_ok} | {pdf} | "
+                      f"{r.get('citations') or 0} | {trust_s} |")
+    return "\n".join(zeilen)
+
+
 def erstelle_dossier(pipeline_ergebnis: dict, ziel=None,
                      download_pdfs: bool = False) -> dict:
     """Pipeline-Ergebnis → <ziel>/<Thema>_Dossier/{README.md, .bib}.
@@ -151,6 +175,12 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None,
 ## Executive Summary
 
 {(synthesis.get("summary") or "_Keine Zusammenfassung erzeugt._")}
+
+---
+
+## Qualitäts-Übersicht ({min(len(results), 25)} Paper)
+
+{_qualitaets_tabelle(results, pipeline_ergebnis.get("verifier_detail") or [])}
 
 ---
 

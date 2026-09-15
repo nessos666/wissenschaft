@@ -90,3 +90,40 @@ def test_dossier_slug_sicher(tmp_path):
         rel = Path(p).relative_to(tmp_path)
         assert "/" not in str(rel.parent) or True  # Struktur ok
     assert all(Path(p).exists() for p in pfade.values())
+
+
+# ---------- Verbesserung 7: Qualitäts-Tabelle ----------
+
+def test_qualitaetstabelle_spalten():
+    from sources.writer import _qualitaets_tabelle
+    results = [{"title": "Paper A", "year": "2024", "source": "CrossRef",
+                "doi": "10.1/x", "pdf_url": "", "citations": 5}]
+    detail = [{"title": "Paper A", "doi_verified": True, "trust_score": 0.8}]
+    t = _qualitaets_tabelle(results, detail)
+    assert "| # | Titel (Jahr) | Quelle | DOI ✓ |" in t
+    assert "Paper A (2024)" in t
+    assert "0.80" in t  # Trust durchgereicht
+
+
+def test_qualitaetstabelle_leer():
+    from sources.writer import _qualitaets_tabelle
+    assert _qualitaets_tabelle([], []) == ""
+
+
+def test_dossier_enthaelt_qualitaetsuebersicht(tmp_path):
+    from sources.writer import erstelle_dossier
+    ergebnis = {
+        "query": "test thema", "depth": "standard", "domain": "x",
+        "researcher": {"results": [
+            {"title": "Paper X", "year": "2023", "source": "PubMed",
+             "doi": "10.1/y", "pdf_url": "", "citations": 3}],
+            "sources_geliefert": ["PubMed"], "sources_versucht": 28},
+        "prisma": {"identified": 1, "screened": 1, "included": 1},
+        "synthesis": {"summary": "Text", "next_searches": []},
+        "verifier_detail": [{"title": "Paper X", "doi_verified": True,
+                             "trust_score": 0.75}],
+    }
+    pfade = erstelle_dossier(ergebnis, ziel=str(tmp_path))
+    readme = open(pfade["README.md"]).read()
+    assert "## Qualitäts-Übersicht" in readme
+    assert "0.75" in readme

@@ -153,6 +153,7 @@ class OrchestratorV3:
                            "results": researcher_results,
                            "search_performed": bool(r.data.get("search_performed"))},
             "verifier": v.data.get("summary", {}),
+            "verifier_detail": v.data.get("verified_results", []),
             "evidence": evidence_sum,
             "synthesis": {
                 "summary": s.data.get("executive_summary", ""),
