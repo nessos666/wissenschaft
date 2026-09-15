@@ -125,3 +125,27 @@ def test_abstract_anreicherung_ohne_doi_kein_netz():
     p = [{"doi": "", "abstract": "", "title": "Kein DOI"}]
     out = papersearch._reichere_abstracts_an(p, timeout_s=0.1)
     assert out[0]["abstract"] == ""
+
+
+# ---------- Runde 2: Medizin/Bio/Labor + CS/Mathe/Bücher ----------
+
+def test_medizin_bio_labor_angebunden():
+    """Davids Kernwunsch: Medizin/Bio/Chemie/Labor-Quellen aktiv."""
+    medizin_bio = {"clinicaltrials", "uniprot", "chembl", "ncbi_gene",
+                   "ensembl", "biostudies"}
+    assert medizin_bio.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {medizin_bio - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_github_angebunden():
+    """Davids 'Geachhab': GitHub + GitLab + PyPI aktiv."""
+    assert {"github", "gitlab", "pypi"}.issubset(set(papersearch.SEARCHER_MAP))
+
+
+def test_mathe_und_buecher():
+    assert {"zbmath", "oeis", "openlibrary", "internetarchive"}.issubset(
+        set(papersearch.SEARCHER_MAP))
+
+
+def test_gesamt_mindestens_45_quellen():
+    assert len(papersearch.ALL_SOURCES) >= 45

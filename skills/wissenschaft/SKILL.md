@@ -15,10 +15,13 @@ trigger_keywords:
 
 # /wissenschaft V4 — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-**28 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
+**45 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
 OpenAlex, PMC, CORE, DOAJ, OpenAIRE, Zenodo, DBLP, HAL, SSRN, CiteSeerX,
 arXiv, bioRxiv, medRxiv, IACR, ChemRxiv, DataCite, INSPIRE-HEP, COD,
-Figshare, PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv)
+Figshare, PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv,
+ClinicalTrials.gov, UniProt, ChEMBL, NCBI Gene, Ensembl, EBI BioStudies,
+OpenReview, HuggingFace Papers, GitHub, GitLab, PyPI, zbMATH, OEIS,
+Dryad, Wikidata, Open Library, Internet Archive)
 + 4-Agenten-Pipeline (Researcher → Verifier → Synthesis → Reviewer)
 + PRISMA-Statistik + Dossier (README + BibTeX + optional PDFs).
 Läuft komplett lokal, ohne API-Keys. Code: `12_Wissenschaft_Tool/` (Git).
@@ -49,7 +52,7 @@ Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
 ### 2. Ergebnis
 Dossier unter `~/HAUPTLAGER/XX_WissenschaftSkill/<THEMA>_Dossier/`:
 - `README.md` — PRISMA-Flowchart, Qualitäts-Tabelle (DOI ✓ / PDF / Zit. / Trust),
-  Quellen-Transparenz („X von 28 aktiv"), Quellen ohne Antwort
+  Quellen-Transparenz („X von 45 aktiv"), Quellen ohne Antwort
 - `*_Evidenz.bib` — BibTeX
 - `pdfs/` — falls `--download`
 

@@ -71,6 +71,9 @@ ALL_SOURCES = list(SEARCHER_MAP.keys())
 # Extra-Quellen (Quellen-Ausbau 2026-09): eigene Connectors für Chemie/Physik/
 # Generisch. Funktionen liefern direkt unser _norm-Format.
 from sources.quellen_extra import EXTRA_QUELLEN
+from sources.quellen_extra2 import EXTRA_QUELLEN_2
+
+EXTRA_QUELLEN.update(EXTRA_QUELLEN_2)
 
 # Gesamt-Reihenfolge (Qualitäts-Priorität): kuratierte DOI-Quellen zuerst,
 # dann Preprints, dann die neuen Domänen-Quellen.
