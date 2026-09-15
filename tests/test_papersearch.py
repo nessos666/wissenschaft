@@ -176,3 +176,17 @@ def test_runde4_ncbi_ebi():
 
 def test_gesamt_mindestens_70_quellen():
     assert len(papersearch.ALL_SOURCES) >= 70
+
+
+# ---------- Runde 5: Software/Preprints/Register/Daten/Bibliotheken ----------
+
+def test_runde5_quellen():
+    neue = {"npm", "cran", "codeberg", "dockerhub", "maven", "packagist",
+            "scipost", "who_ictrp", "dataverse", "gutenberg", "wikisource",
+            "standardebooks", "europeana"}
+    assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_gesamt_mindestens_84_quellen():
+    assert len(papersearch.ALL_SOURCES) >= 84
