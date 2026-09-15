@@ -23,7 +23,8 @@ class OrchestratorV3:
     
     def run_pipeline(self, query: str, depth: str = "standard", domain: str = None,
                      raw_results: list[dict] = None, use_cache: bool = True,
-                     jahr_von: str = "", jahr_bis: str = "") -> dict:
+                     jahr_von: str = "", jahr_bis: str = "",
+                     nur_quellen: str = "") -> dict:
         t0 = time.time()
         
         # Cache-Check — Abschluss-Review F5: früher early-return mit Mini-Schema
@@ -50,7 +51,9 @@ class OrchestratorV3:
                 "sources_geliefert": [], "sources_ohne_antwort": [],
                 "search_performed": False}})()
         else:
-            r = self.researcher.run({"query": query, "depth": depth, "domain": domain})
+            r = self.researcher.run({"query": query, "depth": depth,
+                                     "domain": domain,
+                                     "nur_quellen": nur_quellen})
             if not r.success:
                 return {"error": "Researcher fehlgeschlagen", "details": r.errors}
         

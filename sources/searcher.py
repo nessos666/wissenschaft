@@ -217,8 +217,13 @@ def search(query: str, max_results: int = 8) -> list[dict]:
     return ergebnisse
 
 
-def search_mit_info(query: str, max_results: int = 8) -> tuple:
-    """Verbesserung 9: wie search(), liefert zusätzlich Transparenz-Info.
+def search_mit_info(query: str, max_results: int = 8,
+                    nur_quellen: str = "") -> tuple:
+    """Verbesserung 9+10: wie search(), liefert zusätzlich Transparenz-Info.
+
+    nur_quellen (Verbesserung 10 — Delta-Folgelauf): kommagetrennte
+    Quellen-Auswahl; nur diese werden abgefragt (z.B. die, die im letzten
+    Lauf ohne Antwort waren).
 
     Returns (treffer, info) mit
       info = {"versucht": N, "geliefert": [quellen...],
@@ -227,14 +232,18 @@ def search_mit_info(query: str, max_results: int = 8) -> tuple:
     info = {"versucht": 0, "geliefert": [], "ohne_antwort": []}
     try:
         from sources.papersearch import ALL_SOURCES
-        info["versucht"] = len(ALL_SOURCES)
+        info["versucht"] = (len([q.strip() for q in nur_quellen.split(",") if q.strip()])
+                            if nur_quellen else len(ALL_SOURCES))
     except Exception:
         pass
 
     if multi_suche is not None:
         try:
-            erg = multi_suche(query, max_results_per_source=max(3, max_results // 3),
-                              timeout_s=300.0)
+            kwargs = {"max_results_per_source": max(3, max_results // 3),
+                      "timeout_s": 300.0}
+            if nur_quellen:
+                kwargs["sources"] = nur_quellen
+            erg = multi_suche(query, **kwargs)
             papers = erg.get("papers", [])
             info["geliefert"] = sorted(erg.get("sources_used", []))
             info["ohne_antwort"] = sorted((erg.get("errors") or {}).keys())

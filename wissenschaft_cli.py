@@ -29,6 +29,10 @@ def main():
                         help="Nur Treffer ab diesem Jahr (Verbesserung 8)")
     parser.add_argument("--jahr-bis", type=str, default="",
                         help="Nur Treffer bis zu diesem Jahr (Verbesserung 8)")
+    parser.add_argument("--quellen", type=str, default="",
+                        help="Delta-Folgelauf (Verbesserung 10): nur diese "
+                             "kommagetrennten Quellen abfragen, z.B. "
+                             "'openalex,semantic' — für Lücken aus dem letzten Lauf")
     args = parser.parse_args()
 
     if not args.query:
@@ -44,7 +48,8 @@ def main():
         orch = Orchestrator()
         result = orch.run_pipeline(query=args.query, depth=args.tiefe,
                                    raw_results=None, use_cache=False,
-                                   jahr_von=args.jahr_von, jahr_bis=args.jahr_bis)
+                                   jahr_von=args.jahr_von, jahr_bis=args.jahr_bis,
+                                   nur_quellen=args.quellen)
         if not result.get("pipeline_success"):
             print(f"  ✗ Pipeline fehlgeschlagen: {result.get('error', '?')}")
             return

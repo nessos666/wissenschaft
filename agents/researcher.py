@@ -25,7 +25,9 @@ class ResearcherAgent(BaseAgent):
             # (statt nur Quellen zu routen). Quelle down → andere liefert.
             max_results = {"schnell": 5, "standard": 15, "tief": 25}.get(depth, 15)
             from sources.searcher import search_mit_info
-            treffer, such_info = search_mit_info(query, max_results=max_results)
+            treffer, such_info = search_mit_info(
+                query, max_results=max_results,
+                nur_quellen=input_data.get("nur_quellen", ""))
 
             # Verbesserung 6: Query-Erweiterung — NUR wenn die Hauptsuche
             # wenig liefert (< 5 Treffer). Ehrlicher Befund: die Langform

@@ -143,3 +143,23 @@ def test_search_mit_info_leer_kein_crash(monkeypatch):
     monkeypatch.setattr(searcher, "search", lambda q, max_results=8: [])
     treffer, info = searcher.search_mit_info("x", max_results=3)
     assert treffer == [] and info["ohne_antwort"] == []
+
+
+# ---------- Verbesserung 10: Delta-Folgelauf (nur_quellen) ----------
+
+def test_search_mit_info_nur_quellen(monkeypatch):
+    """nur_quellen reicht die Quellen-Auswahl an die Multi-Suche durch."""
+    aufruf = {}
+
+    def fake_multi(query, **kwargs):
+        aufruf.update(kwargs)
+        return {"papers": [{"title": "X", "source": "OpenAlex", "doi": "",
+                            "url": ""}],
+                "sources_used": ["openalex"], "errors": {}}
+
+    monkeypatch.setattr(searcher, "multi_suche", fake_multi)
+    treffer, info = searcher.search_mit_info("test", max_results=5,
+                                             nur_quellen="openalex,semantic")
+    assert aufruf.get("sources") == "openalex,semantic", "Auswahl nicht durchgereicht!"
+    assert info["versucht"] == 2, "versucht muss die Auswahl zählen"
+    assert info["geliefert"] == ["openalex"]
