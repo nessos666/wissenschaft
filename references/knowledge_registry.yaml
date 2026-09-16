@@ -1,0 +1,124 @@
+# knowledge_registry.yaml V1.0 — 22.07.2026
+# 30+ wissenschaftliche Quellen, 4 Tiers, Domain-Routing
+# Genutzt von source_router.py im /wissenschaft Pipeline
+
+tiers:
+  1_always:
+    description: "Immer durchsucht, unabhängig von Domain"
+    sources:
+      - name: OpenAlex
+        id: openalex
+        url: https://api.openalex.org
+        type: rest
+        coverage: universal
+        rate_limit: 10/second
+        mcp_tool: mcp__paper_search__search_openalex
+
+      - name: CrossRef
+        id: crossref
+        url: https://api.crossref.org
+        type: rest
+        coverage: universal
+        mcp_tool: mcp__paper_search__search_crossref
+
+      - name: Semantic Scholar
+        id: semantic_scholar
+        url: https://api.semanticscholar.org
+        type: rest
+        coverage: universal
+        note: "Ohne API-Key oft 0 Treffer -> als degraded markieren"
+        mcp_tool: mcp__paper_search__search_semantic_scholar
+
+  2_domain:
+    description: "Domain-spezifisch, wird nur bei Domain-Match durchsucht"
+    sources:
+      - name: arXiv
+        id: arxiv
+        url: https://arxiv.org
+        type: rest
+        domains: [ai, physics, computer_science, mathematics, trading]
+        mcp_tool: mcp__paper_search__search_arxiv
+
+      - name: PubMed
+        id: pubmed
+        url: https://pubmed.ncbi.nlm.nih.gov
+        type: rest
+        domains: [medical, biology, chemistry]
+        mcp_tool: mcp__paper_search__search_pubmed
+
+      - name: SSRN
+        id: ssrn
+        url: https://papers.ssrn.com
+        type: rest
+        domains: [economics, trading, finance]
+        mcp_tool: mcp__paper_search__search_ssrn
+
+      - name: GitHub
+        id: github
+        url: https://github.com
+        type: rest
+        domains: [ai, computer_science]
+        note: "Nicht via MCP, sondern GitHub API / web_search"
+
+      - name: Papers With Code
+        id: paperswithcode
+        url: https://paperswithcode.com
+        type: rest
+        domains: [ai, computer_science]
+        note: "Benchmarks + Code-Links"
+
+      - name: HuggingFace Papers
+        id: huggingface
+        url: https://huggingface.co/papers
+        type: web
+        domains: [ai]
+        note: "Tagesaktuelle AI-Paper, community-geranked"
+
+      - name: medRxiv
+        id: medrxiv
+        url: https://medrxiv.org
+        type: rest
+        domains: [medical]
+        note: "Preprints"
+
+      - name: bioRxiv
+        id: biorxiv
+        url: https://biorxiv.org
+        type: rest
+        domains: [biology]
+        note: "Preprints"
+
+      - name: RePEc
+        id: repec
+        url: https://repec.org
+        type: rest
+        domains: [economics]
+        note: "Economics papers"
+
+      - name: NBER
+        id: nber
+        url: https://nber.org
+        type: rest
+        domains: [economics]
+        note: "Working papers"
+
+      - name: ChemRxiv
+        id: chemrxiv
+        url: https://chemrxiv.org
+        type: rest
+        domains: [chemistry]
+
+      - name: Inspire
+        id: inspire
+        url: https://inspirehep.net
+        type: rest
+        domains: [physics]
+
+      - name: DBLP
+        id: dblp
+        url: https://dblp.org
+        type: rest
+        domains: [computer_science]
+        note: "CS bibliography"
+
+  # Tier 3 + 4 are included in the skill's references but mainly used via OpenAlex coverage
