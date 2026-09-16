@@ -7,8 +7,20 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-PY = str(REPO / ".venv" / "bin" / "python")
 CLI = str(REPO / "wissenschaft_cli.py")
+
+
+def _python():
+    """Das Python, das die Tests ausführt — funktioniert lokal (venv) UND in der CI.
+
+    Wichtig: NICHT .venv/bin/python hartkodieren — in der CI (GitHub-Runner)
+    existiert kein venv und der Test bricht mit FileNotFoundError ab.
+    """
+    venv = REPO / ".venv" / "bin" / "python"
+    return str(venv) if venv.exists() else sys.executable
+
+
+PY = _python()
 
 
 def _run(*args, timeout=60):
