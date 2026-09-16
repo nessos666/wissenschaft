@@ -155,7 +155,10 @@ class OrchestratorV3:
         # Block 3: defensiv — Einträge können Nicht-Dict sein
         oa_count = sum(1 for x in (raw_nach_dedup or [])
                        if isinstance(x, dict) and x.get("pdf_url"))
-        final_count = min(total_dedup, 20)
+        # F11: 'included' muss EXAKT der gezeigten Trefferliste entsprechen
+        # (vorher: min(dedup,20) vs. researcher_results[:20] — konnte driften)
+        researcher_results = (raw_nach_dedup or [])[:20]
+        final_count = len(researcher_results)
         prisma_flow = compute_prisma(total_raw, total_dedup, oa_count, final_count)
         
         # Cache speichern (deduplizierte Treffer — Block 5)
@@ -167,7 +170,7 @@ class OrchestratorV3:
         total_ms = (time.time() - t0) * 1000
         
         # Block 2+5: DEDUPLIZIERTE Researcher-Ergebnisse im Ergebnis führen
-        researcher_results = (raw_nach_dedup or [])[:20]
+        # (researcher_results wird oben bei der PRISMA-Berechnung gesetzt — F11)
         return {
             "pipeline_success": True,
             "cached": cache_herkunft,

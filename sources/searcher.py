@@ -253,10 +253,15 @@ def search_mit_info(query: str, max_results: int = 8,
             info["ohne_antwort"] = sorted((erg.get("errors") or {}).keys())
             if papers:
                 return papers[:max_results], info
+            # F5: multi_suche lief bereits erfolgreich (nur ohne Treffer) —
+            # NICHT erneut über search() suchen (das ruft multi_suche intern
+            # nochmal auf = doppelte Netz-Last). Ehrlich leer zurückgeben.
+            info["keine_treffer"] = True
+            return [], info
         except Exception:
             pass
 
-    # Fallback (Bibliothek fehlt/keine Treffer)
+    # Fallback (NUR wenn multi_suche fehlt oder eine Exception warf)
     treffer = search(query, max_results=max_results)
     if treffer:
         info["geliefert"] = sorted({t.get("source", "?") for t in treffer

@@ -18,6 +18,10 @@ from pathlib import Path
 # erlaubt nur ~4-8 gleichzeitige Threads, wodurch 20 Quellen in Wellen liefen
 # und hängende Quellen die schnellen blockierten (Fusion-Fix).
 _EXECUTOR = ThreadPoolExecutor(max_workers=24, thread_name_prefix="wissq")
+# F8: getrennter Pool für die Abstract-Anreicherung — sie darf nicht hinter
+# hängenden Such-Threads warten (die laufen nach einem Timeout weiter, weil
+# Python-Threads nicht abbrechbar sind).
+_EXECUTOR_ENRICH = ThreadPoolExecutor(max_workers=8, thread_name_prefix="wissenr")
 
 VENDOR = Path(__file__).resolve().parents[1] / "vendor" / "paper_search_mcp"
 if str(VENDOR) not in sys.path:
@@ -192,7 +196,7 @@ def _reichere_abstracts_an(papers: list, timeout_s: float = 8.0) -> list:
     async def _lauf():
         import asyncio as _aio
         tasks = {id(p): _aio.get_event_loop().run_in_executor(
-                     _EXECUTOR, _lade, p["doi"]) for p in beduerftig}
+                     _EXECUTOR_ENRICH, _lade, p["doi"]) for p in beduerftig}
         ergebnis = {}
         for pid, t in tasks.items():
             try:
@@ -245,13 +249,20 @@ def search_papers(query: str, max_results_per_source: int = 3,
         # langsame Quellen dürfen arbeiten (bis 60s pro Quelle, parallel).
         # Schnelle Quellen liefern sofort, langsame kommen nach. Teilwissen
         # ist ok — der Rest fließt in Folgeläufe/Cache.
-        pro_quelle_s = min(60.0, timeout_s)
+        # F8: alle Quellen GLEICHZEITIG abwarten (gather) statt sequenziell.
+        # Vorher kostete eine hängende Quelle bis zu 60 s PRO Quelle obendrauf
+        # (149 Quellen → Thread-Stau). Jetzt greift EIN Gesamt-Timeout, alle
+        # parallelen Treffer kommen trotzdem an (Davids Timeout-Philosophie:
+        # langsam arbeiten lassen, Teilwissen liefern).
+        try:
+            roh = await asyncio.wait_for(
+                asyncio.gather(*tasks.values(), return_exceptions=True),
+                timeout=max(30.0, timeout_s))
+        except (asyncio.TimeoutError, Exception):
+            roh = []
         ergebnis = {}
-        for q, t in tasks.items():
-            try:
-                ergebnis[q] = await asyncio.wait_for(t, timeout=pro_quelle_s)
-            except Exception:
-                ergebnis[q] = []  # Quelle zu langsam/Fehler — andere liefern
+        for q, e in zip(tasks.keys(), roh):
+            ergebnis[q] = e if isinstance(e, list) else []
         return ergebnis
 
     try:
