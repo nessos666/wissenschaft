@@ -251,6 +251,10 @@ def search_mit_info(query: str, max_results: int = 8,
             papers = erg.get("papers", [])
             info["geliefert"] = sorted(erg.get("sources_used", []))
             info["ohne_antwort"] = sorted((erg.get("errors") or {}).keys())
+            # Transparenz: Quellen, die noch rechnen (kein Fehler!)
+            info["offen"] = sorted(erg.get("sources_offen") or [])
+            info["ohne_treffer"] = sorted(erg.get("sources_ohne_treffer") or [])
+            info["antworteten"] = erg.get("sources_antworteten", 0)
             if papers:
                 return papers[:max_results], info
             # F5: multi_suche lief bereits erfolgreich (nur ohne Treffer) —

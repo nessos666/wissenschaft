@@ -11,6 +11,7 @@ Design (free-first, wie das Original):
 """
 import asyncio
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -249,26 +250,51 @@ def search_papers(query: str, max_results_per_source: int = 3,
         # langsame Quellen dürfen arbeiten (bis 60s pro Quelle, parallel).
         # Schnelle Quellen liefern sofort, langsame kommen nach. Teilwissen
         # ist ok — der Rest fließt in Folgeläufe/Cache.
-        # F8: alle Quellen GLEICHZEITIG abwarten (gather) statt sequenziell.
-        # Vorher kostete eine hängende Quelle bis zu 60 s PRO Quelle obendrauf
-        # (149 Quellen → Thread-Stau). Jetzt greift EIN Gesamt-Timeout, alle
-        # parallelen Treffer kommen trotzdem an (Davids Timeout-Philosophie:
-        # langsam arbeiten lassen, Teilwissen liefern).
-        try:
-            roh = await asyncio.wait_for(
-                asyncio.gather(*tasks.values(), return_exceptions=True),
-                timeout=max(30.0, timeout_s))
-        except (asyncio.TimeoutError, Exception):
-            roh = []
-        ergebnis = {}
-        for q, e in zip(tasks.keys(), roh):
-            ergebnis[q] = e if isinstance(e, list) else []
-        return ergebnis
+        # F8+Transparenz: Quellen GLEICHZEITIG abwarten, aber SOFORT melden,
+        # sobald eine fertig ist — und die noch offenen ehrlich benennen,
+        # statt sie zu verschweigen. Offene Quellen sind kein Fehler: ihre
+        # Treffer kommen im nächsten Lauf (Cache) nach.
+        deadline = time.time() + max(30.0, timeout_s)
+        fut_quelle = {t2: q for q, t2 in tasks.items()}
+        gesamt = len(tasks)
+        ergebnis, offen, status = {}, [], {}
+        pending = set(tasks.values())
+        erste_meldung = True
+        while pending:
+            restzeit = deadline - time.time()
+            if restzeit <= 0:
+                offen = sorted(fut_quelle[f] for f in pending)
+                break
+            done, pending = await asyncio.wait(
+                pending, timeout=restzeit,
+                return_when=asyncio.FIRST_COMPLETED)
+            if not done:
+                offen = sorted(fut_quelle[f] for f in pending)
+                break
+            for f in done:
+                q = fut_quelle[f]
+                try:
+                    r = f.result()
+                    # Transparenz: "geantwortet, aber nichts gefunden" ist
+                    # KEIN Fehler und darf nicht als "keine Antwort" gelten.
+                    status[q] = "ok" if r else "leer"
+                except Exception:
+                    r, status[q] = [], "fehler"
+                r = r if isinstance(r, list) else []
+                ergebnis[q] = r
+                if r:
+                    if erste_meldung:
+                        print(f"   ── Quellen melden sich ({gesamt} angefragt) ──",
+                              flush=True)
+                        erste_meldung = False
+                    print(f"   ✅ [{len(ergebnis):3d}/{gesamt}] {q}: "
+                          f"{len(r)} Treffer", flush=True)
+        return ergebnis, offen, status
 
     try:
-        roh_nach_quelle = asyncio.run(_lauf())
+        roh_nach_quelle, quellen_offen, quellen_status = asyncio.run(_lauf())
     except Exception:
-        roh_nach_quelle = {}
+        roh_nach_quelle, quellen_offen, quellen_status = {}, [], {}
 
     # Round-Robin-Mischung (Qualitäts-Verbesserung): statt flach zu
     # konkatenieren (Top-Quellen würden die Liste dominieren — die ersten
@@ -276,12 +302,15 @@ def search_papers(query: str, max_results_per_source: int = 3,
     # pro Quelle gemischt, dann je 2. … — Relevanz (Quellen-Priorität)
     # UND Vielfalt über alle liefernden Quellen.
     genutzt = []
-    fehler = {}
+    fehler = {}          # echte Fehler (Exception in der Quelle)
+    ohne_treffer = []    # hat geantwortet, aber nichts zum Thema
     for q, treffer in roh_nach_quelle.items():
         if treffer:
             genutzt.append(q)
+        elif quellen_status.get(q) == "fehler":
+            fehler[q] = "Fehler bei der Abfrage"
         else:
-            fehler[q] = "keine Treffer/Fehler"
+            ohne_treffer.append(q)
     gemischt = []
     max_len = max((len(v) for v in roh_nach_quelle.values()), default=0)
     for i in range(max_len):
@@ -292,8 +321,16 @@ def search_papers(query: str, max_results_per_source: int = 3,
     papers = _dedupe(gemischt)  # bereits normiert in _search_eine
     # Verbesserung 4: fehlende Abstracts per CrossRef-Nachschlag anreichern
     papers = _reichere_abstracts_an(papers)
+    # Transparenz (David): offene Quellen sichtbar machen — kein Fehler,
+    # sie liefern beim nächsten Lauf (Cache) nach.
+    if quellen_offen:
+        print(f"   ⏳ {len(quellen_offen)} Quellen rechnen noch "
+              f"(kein Problem — Teilwissen ist geliefert)", flush=True)
     return {"query": query, "sources_used": genutzt, "total": len(papers),
-            "papers": papers, "errors": fehler}
+            "papers": papers, "errors": fehler,
+            "sources_offen": quellen_offen,
+            "sources_ohne_treffer": sorted(ohne_treffer),
+            "sources_antworteten": len(genutzt)}
 
 
 if __name__ == "__main__":

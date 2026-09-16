@@ -44,7 +44,10 @@ def test_f8_gleichzeitiges_abwarten():
     import inspect
     from sources import papersearch
     src = inspect.getsource(papersearch)
-    assert "asyncio.gather" in src, "F8: kein gather — sequenzieller Stau möglich"
+    # asyncio.wait(FIRST_COMPLETED) statt sequenzieller Await-Schleife:
+    # Quellen werden gleichzeitig abgewartet und sofort gemeldet.
+    assert "asyncio.wait" in src, "F8: kein paralleles Abwarten — Stau möglich"
+    assert "FIRST_COMPLETED" in src, "F8: keine Live-Meldung pro Quelle"
 
 
 # ─────────────── F11: PRISMA = Anzeige ───────────────
@@ -63,3 +66,53 @@ def test_f11_prisma_included_entspricht_anzeige():
     gezeigt = len(res["researcher"]["results"])
     included = res["prisma"]["included"]
     assert included == gezeigt, f"F11: prisma.included={included} != angezeigt={gezeigt}"
+
+
+# ─────────────── Transparenz: offene Quellen sichtbar ───────────────
+
+def test_transparenz_offen_und_ohne_treffer_getrennt():
+    """David: offene Quellen müssen sichtbar sein, 'keine Treffer' ist kein Fehler."""
+    import sources.papersearch as ps
+
+    def fake_eine(cls, query, max_results):
+        if cls.__name__ == "ArxivSearcher":
+            return [{"title": "P", "doi": "10.1/a", "url": "u",
+                     "source": "arxiv", "published_date": "2020"}]
+        return []
+
+    orig = ps._search_eine
+    try:
+        ps._search_eine = fake_eine
+        erg = ps.search_papers("test", sources="arxiv,zenodo", timeout_s=10)
+    finally:
+        ps._search_eine = orig
+
+    # Beide Kategorien existieren getrennt und sind nicht identisch
+    assert "sources_offen" in erg
+    assert "sources_ohne_treffer" in erg
+    assert "sources_antworteten" in erg
+    assert erg["total"] >= 1
+    # zenodo hat geantwortet (leer) -> darf NICHT als Fehler gelten
+    assert "zenodo" in erg["sources_ohne_treffer"]
+    assert "zenodo" not in (erg.get("errors") or {})
+
+
+def test_orchestrator_reicht_transparenz_felder_durch():
+    """Regression: der Orchestrator darf offen/ohne_treffer nicht rausfiltern."""
+    import inspect
+    from orchestrator import OrchestratorV3
+    src = inspect.getsource(OrchestratorV3.run_pipeline)
+    assert '"sources_offen"' in src, "Offen-Feld fehlt im Orchestrator-Ergebnis"
+    assert '"sources_ohne_treffer"' in src, "ohne_treffer fehlt im Orchestrator-Ergebnis"
+
+
+def test_writer_zeigt_offene_quellen():
+    """Das Dossier muss den Quellen-Status ausweisen."""
+    from sources.writer import _offene_quellen_markdown
+    fake = {"researcher": {"sources_versucht": 10, "sources_geliefert": ["a"],
+                           "sources_offen": ["langsam1", "langsam2"],
+                           "sources_ohne_treffer": ["speziell1"]}}
+    md = _offene_quellen_markdown(fake)
+    assert "langsam1" in md and "langsam2" in md
+    assert "speziell1" in md
+    assert "kein Fehler" in md.lower() or "normal" in md.lower()

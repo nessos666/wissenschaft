@@ -91,9 +91,11 @@ class ResearcherAgent(BaseAgent):
             except Exception:
                 versucht = len(sources) or 0
 
+            _offen = such_info.get("offen") or []
             self.log(f"{len(treffer)} echte Treffer aus "
                      f"{len(gelieferte)} von {versucht} Quellen "
-                     f"({len(mcp_sources)} MCP-Quellen geroutet)")
+                     f"({len(mcp_sources)} MCP-Quellen geroutet)"
+                     + (f" · {len(_offen)} rechnen noch" if _offen else ""))
 
             return self.ok({
                 "query": query,
@@ -103,6 +105,8 @@ class ResearcherAgent(BaseAgent):
                 "sources_versucht": versucht,
                 "sources_geliefert": gelieferte,
                 "sources_ohne_antwort": such_info.get("ohne_antwort", []),
+                "sources_offen": such_info.get("offen", []),
+                "sources_ohne_treffer": such_info.get("ohne_treffer", []),
                 "mcp_sources": [{"name": s.name, "tool": s.mcp_tool, "tier": s.tier} for s in mcp_sources],
                 "direct_sources": [{"name": s.name, "tier": s.tier} for s in direct_sources],
                 "results": treffer,  # Block 2: echte Suchergebnisse

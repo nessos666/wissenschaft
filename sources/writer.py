@@ -105,6 +105,36 @@ def _bibtex(results: list) -> str:
     return "\n\n".join(eintraege)
 
 
+def _offene_quellen_markdown(pipeline_ergebnis: dict) -> str:
+    """Ehrlicher Quellen-Status: offen / ohne Treffer sind KEINE Fehler.
+
+    David (2026-09): "Wenn manche Daten schneller bearbeitet werden als die
+    anderen, dann muss das Tool anzeigen, dass diese Sachen noch offen sind —
+    es ist nicht schlimm."
+    """
+    r = pipeline_ergebnis.get("researcher") or {}
+    offen = r.get("sources_offen") or []
+    ohne = r.get("sources_ohne_treffer") or []
+    antworteten = r.get("sources_geliefert") or []
+    versucht = r.get("sources_versucht") or 0
+    if not offen and not ohne:
+        return ""
+    aus = ["\n## Quellen-Status\n"]
+    aus.append(f"Von **{versucht} angefragten** Quellen lieferten "
+               f"**{len(antworteten)} Treffer**.\n")
+    if offen:
+        aus.append(f"**⏳ {len(offen)} Quellen rechneten beim Erstellen noch** — "
+                   f"das ist kein Fehler. Sie waren zu langsam für dieses Mal; "
+                   f"ihre Treffer kommen beim nächsten Lauf (Cache) nach:\n")
+        aus.append(", ".join(f"`{q}`" for q in sorted(offen)) + "\n")
+    if ohne:
+        aus.append(f"\n**{len(ohne)} Quellen hatten zu diesem Thema nichts** — "
+                   f"sie wurden gefragt und haben geantwortet, nur ohne "
+                   f"passenden Treffer (bei 149 Spezialquellen völlig normal):\n")
+        aus.append(", ".join(f"`{q}`" for q in sorted(ohne)) + "\n")
+    return "\n".join(aus)
+
+
 def _qualitaets_tabelle(results: list, verifier_detail: list) -> str:
     """Verbesserung 7: Übersichtstabelle mit Qualitäts-Spalten —
     DOI-verifiziert | OA-PDF | Citations | Trust je Paper."""
@@ -188,6 +218,7 @@ def erstelle_dossier(pipeline_ergebnis: dict, ziel=None,
 ## Quellen ({len(results)})
 
 {_quellen_markdown(results)}
+{_offene_quellen_markdown(pipeline_ergebnis)}
 
 ---
 

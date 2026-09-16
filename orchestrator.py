@@ -179,6 +179,10 @@ class OrchestratorV3:
                            "sources_versucht": r.data.get("sources_versucht", 0),
                            "sources_geliefert": r.data.get("sources_geliefert", []),
                            "sources_ohne_antwort": r.data.get("sources_ohne_antwort", []),
+                           # Transparenz (David): offene Quellen sichtbar
+                           # machen — kein Fehler, sie rechnen noch.
+                           "sources_offen": r.data.get("sources_offen", []),
+                           "sources_ohne_treffer": r.data.get("sources_ohne_treffer", []),
                            "results": researcher_results,
                            "search_performed": bool(r.data.get("search_performed"))},
             "verifier": v.data.get("summary", {}),
