@@ -1,58 +1,68 @@
-# /wissenschaft — Wissenschaftliche Recherche-Pipeline
+# /wissenschaft — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-> **Ein Slash-Command für Hermes:** `/wissenschaft <Thema>` → akademische Recherche
-> mit Dossier-Erstellung. V3, eigenständiges Tool (nicht Teil von SUCHER-1000).
+> **Ein Slash-Command:** `/wissenschaft <Thema>` → durchsucht **149 key-freie
+> Quellen**, erstellt ein fertiges Dossier (README + BibTeX + optional PDFs).
+> Eigenständiges Tool mit eigenem Git — **überlebt jedes `hermes update`**.
 
-## Was es kann
-
-- **Suchplan:** Query-Analyse + Quellen-Routing (MCP + Direkt-Quellen je Domäne)
-- **4-Agent-Pipeline:** Researcher → Verifier → Synthesis → Reviewer
-- **Evidence-Scoring:** Trust-Scores für Papers (DOI/URL/Autoren-Checks)
-- **PRISMA:** Flussdiagramm + Markdown für systematische Reviews
-- **Export:** Markdown-Report, BibTeX, RIS, JSON
-- **Qdrant-Save:** Ergebnisse vektorisieren (optional)
-
-## Struktur
-
-```
-12_Wissenschaft_Tool/
-├── wissenschaft_cli.py      ← CLI-Einstieg (/wissenschaft)
-├── orchestrator.py          ← 4-Agent-Pipeline (V3)
-├── agents/                  ← researcher, verifier, synthesis, reviewer
-├── query_analyzer.py        ← Query → Domänen-Rate
-├── source_router.py         ← Domäne+Tiefe → Quellenliste
-├── verifier.py              ← DOI/URL/Autoren-Checks + Trust-Score
-├── evidence_scorer.py       ← Evidence-Bewertung
-├── deduplicator.py          ← Duplikat-Erkennung
-├── clusterer.py             ← Themen-Cluster
-├── prisma.py                ← PRISMA-Diagramm
-├── ranker.py                ← Ranking (Ausbau geplant)
-├── formatter.py             ← Markdown/BibTeX/RIS/JSON-Export
-├── cache.py                 ← Response-Cache (24h TTL)
-├── qdrant_save.py           ← Qdrant-Vektorisierung (optional)
-├── sources/                 ← Direkt-Quellen-Clients
-├── skills/                  ← Domänen-Wissen (trading/physics/medicine)
-├── tests/                   ← 144 Tests (Standardbibliothek-only)
-└── requirements.txt         ← keine Pflicht-Abhängigkeiten
-```
-
-## Nutzung
+## Schnellstart
 
 ```bash
-# Suchplan anzeigen
-python3 wissenschaft_cli.py "<Thema>" --tiefe standard --plan
-
-# Pipeline mit Roh-Ergebnissen (JSON aus externer Suche)
-python3 wissenschaft_cli.py "<Thema>" --orchestrate --input ergebnisse.json
+cd ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool
+.venv/bin/python wissenschaft_cli.py "THEMA" --dossier --tiefe standard
 ```
 
-## Git-Ordner
+⚠️ **Immer `.venv/bin/python`** — mit `python3` läuft nur der 2-Quellen-Fallback.
 
-- Branch `main`, Code versioniert (29 Dateien)
-- Dossiers/Recherche-Daten bleiben lokal (`.gitignore`) — der Ordner enthält nur Code
-- Jede Verbesserung = eigener Commit (Block-Disziplin)
+| Tiefe | Treffer |
+|---|---|
+| `--tiefe schnell` | 5 |
+| `--tiefe standard` | 15 |
+| `--tiefe tief` | 25 + **Zitations-Snowballing** |
 
-## Verbesserungs-Plan
+Weitere Flags: `--download` (OA-PDFs) · `--jahr-von 2020 --jahr-bis 2025` ·
+`--quellen "openalex,semantic"` (Delta-Folgelauf)
 
-Siehe `docs/plans/VERBESSERUNG.md` — priorisierte Liste (Such-Client, Robustheit,
-Export, PRISMA-Verdrahtung, Git-Hygiene …), umgesetzt Block für Block.
+## Die wichtigsten Dateien
+
+| Datei | Zweck |
+|---|---|
+| **`check.sh`** | **Health-Check — prüft alles mit einem Befehl** |
+| `install.sh` | Skill update-fest machen (Symlink ins Repo) |
+| `backup.sh` | Git-Bundle erzeugen (komplettes Repo in 1 Datei) |
+| `QUELLEN.md` | alle 149 Quellen nach Kategorie |
+| `ERWEITERN.md` | **neue Quellen hinzufügen (Schritt für Schritt)** |
+| `SICHERUNG.md` | Update-/Backup-Konzept |
+| `wissenschaft_cli.py` | Kommandozeile |
+| `orchestrator.py` | die 4-Agenten-Pipeline |
+| `sources/` | alle Quellen-Connectoren |
+| `tests/` | 157 Tests |
+| `legacy/` | alte Fassungen (nie gelöscht) |
+
+## Pipeline
+
+```
+Researcher → Verifier → Evidence → Synthesis → Cluster → Reviewer → PRISMA → Dossier
+   ↓            ↓                                          ↓
+149 Quellen   DOI/URL                              Quellen-Status
+(Dedup→Ranking) Trust-Score                    (offen / ohne Treffer / Fehler)
+```
+
+**Ehrliche Transparenz:** Das Tool zeigt live, welche Quellen liefern, welche
+noch rechnen und welche zum Thema nichts hatten — alles kein Fehler.
+
+## Update-Schutz (wichtig)
+
+| Ebene | Schutz |
+|---|---|
+| **Skill** | **Symlink** ins Repo → `hermes update` kann ihn nicht ersetzen |
+| **Code** | eigenes Git-Repo, `.venv` unabhängig von Hermes |
+| **Backup** | Git-Bundle in `~/HAUPTLAGER/99_BACKUPS/` |
+| **Wiederherstellen** | `./install.sh` (Skill) · `git clone <bundle>` (Repo) |
+
+Nach `hermes update`: **`./check.sh`** laufen lassen — es sagt dir sofort,
+ob alles noch sitzt.
+
+## Daten bleiben lokal
+
+Dossiers (`*_Dossier/`, `Dossiers/`) sind in `.gitignore` — sie enthalten
+Recherche-Ergebnisse, keinen Code.
