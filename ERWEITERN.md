@@ -87,8 +87,14 @@ Unten in der Datei eintragen:
 EXTRA_QUELLEN_N = {"beispiel": suche_beispiel}
 ```
 
-Dann in `sources/papersearch.py` importieren und in die Update-Schleife
-aufnehmen (siehe die bestehenden `EXTRA_QUELLEN_2` … `_9`).
+Dann in `sources/papersearch.py` **beides** ergänzen:
+1. den Import:  `from sources.quellen_extraN import EXTRA_QUELLEN_N`
+2. den Eintrag in der Schleife:
+   ```python
+   for _extra in (EXTRA_QUELLEN_2, …, EXTRA_QUELLEN_N):
+       EXTRA_QUELLEN.update(_extra)
+   ```
+   Die Zeile `EXTRA_QUELLEN.update(...)` weiter unten baut daraus `SEARCHER_MAP`.
 
 ### 4. Tests
 In `tests/test_papersearch.py` ergänzen:

@@ -83,10 +83,17 @@ else
 fi
 
 # 7 — Git
-if [ -z "$(git status --short 2>/dev/null)" ]; then
+if [ ! -d .git ]; then
+    echo "✗ Git ............... kein Git-Repo (hier erwartet)"; FEHLER=1
+elif [ -z "$(git status --short 2>/dev/null)" ]; then
     echo "✓ Git ............... Arbeitsbaum sauber ($(git log --oneline 2>/dev/null | wc -l) Commits)"
 else
     echo "! Git ............... $(git status --short | wc -l) uncommittete Änderungen"
+fi
+
+# timeout verfuegbar? (sonst laufen die Zeitbegrenzungen ins Leere)
+if ! command -v timeout >/dev/null 2>&1; then
+    echo "! timeout ........... nicht verfuegbar — Zeitbegrenzungen inaktiv"
 fi
 
 echo

@@ -34,8 +34,9 @@ if [ ! -L "$ZIEL_DIR" ]; then
 fi
 
 # Fall 2: Symlink vorhanden -> pruefen ob er noch auf dieses Repo zeigt
-AKTUELL="$(readlink "$ZIEL_DIR")"
-if [ "$AKTUELL" != "$REPO/skills/wissenschaft" ]; then
+AKTUELL="$(readlink -f "$ZIEL_DIR" 2>/dev/null || readlink "$ZIEL_DIR")"
+SOLL="$(readlink -f "$REPO/skills/wissenschaft" 2>/dev/null || echo "$REPO/skills/wissenschaft")"
+if [ "$AKTUELL" != "$SOLL" ]; then
     echo "→ Symlink zeigt auf '$AKTUELL' — korrigiere …"
     "$REPO/install.sh"
     exit 0
