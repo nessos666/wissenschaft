@@ -1,6 +1,6 @@
 ---
 name: wissenschaft
-description: "Akademische Recherche: 149 Quellen, PRISMA-Dossier, PDFs, Snowballing."
+description: "Akademische Recherche: 148 Quellen, PRISMA-Dossier, PDFs, Snowballing."
 version: 4.0.0
 trigger_keywords:
   - wissenschaft
@@ -15,7 +15,7 @@ trigger_keywords:
 
 # /wissenschaft V4 — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-**149 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
+**148 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
 OpenAlex, PMC, CORE, DOAJ, OpenAIRE, Zenodo, DBLP, HAL, SSRN, CiteSeerX,
 arXiv, bioRxiv, medRxiv, IACR, ChemRxiv, DataCite, INSPIRE-HEP, COD,
 Figshare, PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv,
@@ -52,7 +52,7 @@ cd ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool
 → Echte Multi-Quellen-Suche → Dedup → Relevanz-Ranking → Verifier (DOI/URL)
 → Evidence → Synthesis → Reviewer → **fertiges Dossier**.
 
-**Wichtig:** IMMER `.venv/bin/python` nutzen (dort liegen die 149 Quellen).
+**Wichtig:** IMMER `.venv/bin/python` nutzen (dort liegen die 148 Quellen).
 Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
 
 ### Tiefe
@@ -68,7 +68,7 @@ Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
 ### 2. Ergebnis
 Dossier unter `~/HAUPTLAGER/XX_WissenschaftSkill/<THEMA>_Dossier/`:
 - `README.md` — PRISMA-Flowchart, Qualitäts-Tabelle (DOI ✓ / PDF / Zit. / Trust),
-  Quellen-Transparenz („X von 149 aktiv"), Quellen ohne Antwort
+  Quellen-Transparenz („X von 148 aktiv"), Quellen ohne Antwort
 - `*_Evidenz.bib` — BibTeX
 - `pdfs/` — falls `--download`
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # /wissenschaft HEALTH-CHECK — ein Befehl, der alles prueft.
 # Nutzung:  ./check.sh
-cd "$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$(dirname "$0")" && pwd)"
+cd "$REPO"
 FEHLER=0
 
 echo "══════════════════════════════════════════"
@@ -20,28 +21,38 @@ fi
 # 2 — Quellen
 if [ -x .venv/bin/python ]; then
     N=$(cd . && .venv/bin/python -c "import sys;sys.path.insert(0,'.');from sources.papersearch import ALL_SOURCES as A;print(len(A))" 2>/dev/null || echo 0)
-    if [ "$N" -ge 130 ] 2>/dev/null; then
-        echo "✓ Quellen ........... $N aktiv (Ziel ≥130 erreicht)"
+    if [ "$N" -ge 145 ] 2>/dev/null; then
+        echo "✓ Quellen ........... $N aktiv (Sollwert 148)"
     else
-        echo "✗ Quellen ........... nur $N aktiv (erwartet ≥130)"
+        echo "✗ Quellen ........... nur $N aktiv (erwartet ≥145 / Soll 148)"
         FEHLER=1
     fi
 fi
 
 # 3 — Tests
 if [ -x .venv/bin/python ]; then
-    T=$(timeout 300 .venv/bin/python -m pytest tests/ -q 2>&1 | tail -1)
-    case "$T" in
-        *failed*|*error*) echo "✗ Tests ............. $T"; FEHLER=1 ;;
-        *passed*)         echo "✓ Tests ............. $T" ;;
-        *)                echo "? Tests ............. $T" ;;
-    esac
+    OUT=$(timeout 300 .venv/bin/python -m pytest tests/ -q 2>&1); RC=$?
+    T=$(printf '%s\n' "$OUT" | tail -1)
+    if [ "$RC" -ne 0 ]; then
+        echo "✗ Tests ............. $T (rc=$RC — Timeout oder Fehler)"; FEHLER=1
+    elif printf '%s' "$T" | grep -q "passed"; then
+        echo "✓ Tests ............. $T"
+    else
+        echo "? Tests ............. unerwartete Ausgabe: $T"; FEHLER=1
+    fi
 fi
 
 # 4 — Skill-Kette (Repo → Hermes)
 ZIEL="$HOME/.hermes/skills/research/wissenschaft"
 if [ -L "$ZIEL" ]; then
-    echo "✓ Skill-Kette ....... Symlink (update-fest) -> $(readlink "$ZIEL")"
+    ZIEL_REAL="$(readlink -f "$ZIEL" 2>/dev/null || echo "")"
+    ERWARTET="$REPO/skills/wissenschaft"
+    if [ -n "$ZIEL_REAL" ] && [ "$ZIEL_REAL" = "$ERWARTET" ] && [ -r "$ZIEL/SKILL.md" ]; then
+        echo "✓ Skill-Kette ....... Symlink (update-fest) -> $ZIEL_REAL"
+    else
+        echo "✗ Skill-Kette ....... Symlink KAPUTT/FALSCH (zeigt auf: ${ZIEL_REAL:-nichts}) — './install.sh'"
+        FEHLER=1
+    fi
 elif [ -f "$ZIEL/SKILL.md" ]; then
     if diff -q "$ZIEL/SKILL.md" skills/wissenschaft/SKILL.md >/dev/null 2>&1; then
         echo "✓ Skill-Kette ....... Hermes-Kopie identisch (Tipp: ./install.sh für Symlink)"

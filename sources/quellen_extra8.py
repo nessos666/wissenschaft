@@ -375,12 +375,25 @@ def suche_macrostrat(query, max_results=5):
 @_safe
 def suche_iaea_nuclear(query, max_results=5):
     """IAEA Kern-Daten (Nuklid-Datenbank)."""
+    nuklid = query.split()[0] if query.split() else "26Fe56"
     r = requests.get("https://www-nds.iaea.org/relnsd/v1/data",
-                     params={"fields": "ground_states", "nuclides": query.split()[0] if query.split() else "26Fe56"},
+                     params={"fields": "ground_states", "nuclides": nuklid},
                      headers=HEADERS, timeout=TIMEOUT)
-    return [_e(f"IAEA Nuklid-Daten: {query}", "https://www-nds.iaea.org/relnsd/vcharthtml/VChartHTML.html",
-               "IAEA Kerndaten", abstract="Kernphysikalische Daten (Zerfall, Halbwertszeit, Spin)")
-            ] if r.status_code == 200 else []
+    # F22: Antwort wirklich auswerten — leere/ungueltige Body -> keine Quelle
+    if r.status_code != 200 or not r.text.strip():
+        return []
+    daten = None
+    try:
+        daten = r.json()
+    except Exception:
+        return []
+    eintraege = daten if isinstance(daten, list) else [daten]
+    if not eintraege or not any(eintraege):
+        return []
+    return [_e(f"IAEA Nuklid-Daten: {nuklid}",
+               "https://www-nds.iaea.org/relnsd/vcharthtml/VChartHTML.html",
+               "IAEA Kerndaten",
+               abstract="Kernphysikalische Daten (Zerfall, Halbwertszeit, Spin)")]
 
 
 @_safe

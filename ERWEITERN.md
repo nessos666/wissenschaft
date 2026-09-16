@@ -20,7 +20,43 @@ print(r.status_code, r.text[:200])
 **Harte Kriterien:** HTTP 200 · echte Daten · kein API-Key · kein Bot-Block.
 
 ### 2. Connector schreiben
-In `sources/quellen_extraN.py` (neue Runde = neue Datei). Vorlage:
+In `sources/quellen_extraN.py` (neue Runde = neue Datei).
+
+**Jede `quellen_extraN.py` bringt diesen Header selbst mit** (kopieren!):
+
+```python
+import re
+from urllib.parse import quote
+
+import requests
+
+TIMEOUT = 20
+HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) WissenschaftTool/4.0 "
+                         "(mailto:kontakt@wissenshaft.tool)"}
+
+
+def _jahr(t):
+    m = re.search(r"(19|20)\d{2}", str(t or ""))
+    return m.group(0) if m else ""
+
+
+def _safe(fn):
+    def wrapper(query, max_results=5):
+        try:
+            return fn(query, max_results)
+        except Exception:
+            return []
+    wrapper.__name__ = fn.__name__
+    return wrapper
+
+
+def _e(titel, url, source, jahr="", abstract="", authors="", zitate=0, doi=""):
+    return {"title": (titel or "")[:500], "year": jahr, "doi": doi, "url": url or "",
+            "pdf_url": "", "source": source, "citations": zitate,
+            "abstract": (abstract or "")[:800], "authors": (authors or "")[:300]}
+```
+
+Dann die Suchfunktion:
 
 ```python
 @_safe
@@ -71,8 +107,16 @@ def test_rundeN_quellen():
 ```
 Erwartung: Quellen-Zahl steigt, Pipeline läuft, Dossier wird erstellt.
 
-### 6. Committen + sichern
+### 6. Doku + Zahlen angleichen
 ```bash
+.venv/bin/python tools/quellen_md_generieren.py     # QUELLEN.md neu erzeugen
+# Danach die Quellen-Zahl in README.md, SICHERUNG.md und skills/wissenschaft/SKILL.md
+# auf den neuen Stand setzen (die Zahl steht dort im Text).
+```
+
+### 7. Committen + sichern
+```bash
+./check.sh                                          # Health-Check
 git add -A && git commit -m "Quelle X hinzugefügt (live verifiziert)"
 ./backup.sh
 ```

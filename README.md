@@ -1,6 +1,6 @@
 # /wissenschaft — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-> **Ein Slash-Command:** `/wissenschaft <Thema>` → durchsucht **149 key-freie
+> **Ein Slash-Command:** `/wissenschaft <Thema>` → durchsucht **148 key-freie
 > Quellen**, erstellt ein fertiges Dossier (README + BibTeX + optional PDFs).
 > Eigenständiges Tool mit eigenem Git — **überlebt jedes `hermes update`**.
 
@@ -28,8 +28,9 @@ Weitere Flags: `--download` (OA-PDFs) · `--jahr-von 2020 --jahr-bis 2025` ·
 |---|---|
 | **`check.sh`** | **Health-Check — prüft alles mit einem Befehl** |
 | `install.sh` | Skill update-fest machen (Symlink ins Repo) |
+| `sync-skill.sh` | prüft/repariert die Skill-Kette (nach Updates) |
 | `backup.sh` | Git-Bundle erzeugen (komplettes Repo in 1 Datei) |
-| `QUELLEN.md` | alle 149 Quellen nach Kategorie |
+| `QUELLEN.md` | alle 148 Quellen nach Kategorie |
 | `ERWEITERN.md` | **neue Quellen hinzufügen (Schritt für Schritt)** |
 | `SICHERUNG.md` | Update-/Backup-Konzept |
 | `wissenschaft_cli.py` | Kommandozeile |
@@ -43,7 +44,7 @@ Weitere Flags: `--download` (OA-PDFs) · `--jahr-von 2020 --jahr-bis 2025` ·
 ```
 Researcher → Verifier → Evidence → Synthesis → Cluster → Reviewer → PRISMA → Dossier
    ↓            ↓                                          ↓
-149 Quellen   DOI/URL                              Quellen-Status
+148 Quellen   DOI/URL                              Quellen-Status
 (Dedup→Ranking) Trust-Score                    (offen / ohne Treffer / Fehler)
 ```
 

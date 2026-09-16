@@ -53,7 +53,7 @@ python3 -m venv .venv
 ```
 
 **Fall 3 — Neue Maschine / externer Rechner:**
-Bundle kopieren (~320 KB) und wie Fall 2 vorgehen.
+Bundle kopieren (~330 KB) und wie Fall 2 vorgehen.
 
 ## Backup erneuern
 

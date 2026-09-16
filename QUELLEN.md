@@ -1,9 +1,9 @@
-# Alle Quellen (149 aktiv, key-frei)
+# Alle Quellen (148 aktiv, key-frei)
 
-> Automatisch generiert aus `sources/papersearch.py` — Stand 2026-09-16.
-> Quelle der Wahrheit ist der Code, nicht diese Liste.
+> Automatisch generiert — **nicht von Hand ändern**.
+> Neu erzeugen: `.venv/bin/python tools/quellen_md_generieren.py`
 
-**Gesamt: 149 aktive Quellen**
+**Gesamt: 148 aktive Quellen**
 
 
 ## Runde 1 — Chemie/Physik/Preprints/OSF (22)
@@ -87,7 +87,7 @@
 - `sra`
 
 
-## Runde 5 — Software/Preprints/Bibliotheken (13)
+## Runde 5 — Software/Preprints/Bibliotheken (12)
 
 - `codeberg`
 - `cran`
@@ -100,7 +100,6 @@
 - `packagist`
 - `scipost`
 - `standardebooks`
-- `who_ictrp`
 - `wikisource`
 
 

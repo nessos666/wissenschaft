@@ -182,7 +182,7 @@ def test_gesamt_mindestens_70_quellen():
 
 def test_runde5_quellen():
     neue = {"npm", "cran", "codeberg", "dockerhub", "maven", "packagist",
-            "scipost", "who_ictrp", "dataverse", "gutenberg", "wikisource",
+            "scipost", "dataverse", "gutenberg", "wikisource",
             "standardebooks", "europeana"}
     assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
         f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"

@@ -21,8 +21,15 @@ mkdir -p "$(dirname "$ZIEL_DIR")"
 
 # Fall 1: Symlink fehlt/zeigt woandershin -> neu setzen (= update-fest)
 if [ ! -L "$ZIEL_DIR" ]; then
-    echo "→ Symlink fehlt — setze update-feste Verknuepfung …"
-    "$REPO/install.sh"
+    echo "→ Symlink fehlt — versuche update-feste Verknuepfung …"
+    if "$REPO/install.sh" 2>/dev/null; then
+        exit 0
+    fi
+    # Fallback: Symlink nicht moeglich -> Kopie (weniger gut, aber sicher)
+    echo "!  Symlink nicht moeglich — lege Kopie an (nach Update erneut pruefen)"
+    mkdir -p "$ZIEL_DIR"
+    cp "$QUELLE" "$ZIEL_DIR/SKILL.md"
+    echo "✓ Kopie wiederhergestellt: $ZIEL_DIR/SKILL.md"
     exit 0
 fi
 

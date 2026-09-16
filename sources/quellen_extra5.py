@@ -252,7 +252,9 @@ def suche_europeana(query, max_results=5):
 EXTRA_QUELLEN_5 = {
     "npm": suche_npm, "cran": suche_cran, "codeberg": suche_codeberg,
     "dockerhub": suche_dockerhub, "maven": suche_maven, "packagist": suche_packagist,
-    "scipost": suche_scipost, "who_ictrp": suche_who_ictrp,
+    "scipost": suche_scipost,
+    # F21: who_ictrp GEPARKT (Immer-Treffer ohne echte Query-Filterung)
+    # "who_ictrp": suche_who_ictrp,
     "dataverse": suche_dataverse, "gutenberg": suche_gutendex,
     "wikisource": suche_wikisource, "standardebooks": suche_standardebooks,
     "europeana": suche_europeana,

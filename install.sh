@@ -29,6 +29,13 @@ elif [ -L "$ZIEL" ]; then
 fi
 
 ln -s "$QUELLE" "$ZIEL"
+
+# Verifizieren, dass der Link wirklich funktioniert (sonst bringt er nichts)
+if [ ! -r "$ZIEL/SKILL.md" ]; then
+    echo "FEHLER: Symlink gesetzt, aber $ZIEL/SKILL.md nicht lesbar" >&2
+    exit 1
+fi
+
 echo "✓ Update-fest installiert:"
 echo "    $ZIEL  ->  $QUELLE"
 echo
