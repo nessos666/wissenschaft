@@ -3,11 +3,31 @@
 > **Ein Slash-Command:** `/wissenschaft <Thema>` → durchsucht **148 key-freie
 > Quellen**, erstellt ein fertiges Dossier (README + BibTeX + optional PDFs).
 > Eigenständiges Tool mit eigenem Git — **überlebt jedes `hermes update`**.
+>
+> Läuft komplett lokal, **ohne API-Keys**. Lizenz: MIT.
+
+## Installation (3 Befehle)
+
+```bash
+git clone <repo-url> wissenschaft-tool
+cd wissenschaft-tool
+./setup.sh
+```
+
+`setup.sh` ist idempotent und erledigt alles: Python prüfen, `.venv` anlegen,
+Abhängigkeiten installieren, Funktionstest (148 Quellen) und — falls Hermes
+installiert ist — den Slash-Befehl `/wissenschaft` einrichten.
+
+Danach in Hermes: **`/wissenschaft dein thema`**
+oder direkt auf der Kommandozeile (siehe Schnellstart).
+
+**Voraussetzungen:** Python 3.10+ · Linux/macOS · optional Hermes Agent
+(für den Slash-Befehl; das Tool selbst läuft auch ohne).
 
 ## Schnellstart
 
 ```bash
-cd ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool
+cd wissenschaft-tool
 .venv/bin/python wissenschaft_cli.py "THEMA" --dossier --tiefe standard
 ```
 
@@ -26,6 +46,7 @@ Weitere Flags: `--download` (OA-PDFs) · `--jahr-von 2020 --jahr-bis 2025` ·
 
 | Datei | Zweck |
 |---|---|
+| **`setup.sh`** | **Einrichtung in einem Schritt (für Dritte)** |
 | **`check.sh`** | **Health-Check — prüft alles mit einem Befehl** |
 | **`nach-update.sh`** | **nach `hermes update` ausführen — repariert + prüft** |
 | `install.sh` | Skill update-fest machen (Symlink ins Repo) |
@@ -61,8 +82,16 @@ noch rechnen und welche zum Thema nichts hatten — alles kein Fehler.
 | **Backup** | Git-Bundle in `~/HAUPTLAGER/99_BACKUPS/` |
 | **Wiederherstellen** | `./install.sh` (Skill) · `git clone <bundle>` (Repo) |
 
-Nach `hermes update`: **`./check.sh`** laufen lassen — es sagt dir sofort,
+Nach `hermes update`: **`./check.sh`** laufen lassen — es sagt sofort,
 ob alles noch sitzt.
+
+## Herkunft / Danksagung
+
+Die Such-Schicht bündelt Code aus
+[paper-search-mcp](https://github.com/openags/paper-search-mcp) (MIT) —
+siehe `vendor/paper_search_mcp/LICENSE` und `ATTRIBUTION.md`.
+Die Verarbeitungs-Pipeline (Dedup, Ranking, Verifier, PRISMA, Dossier)
+ist eigenständig.
 
 ## Daten bleiben lokal
 

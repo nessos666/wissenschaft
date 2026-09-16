@@ -1,95 +1,130 @@
 ---
 name: wissenschaft
 description: "Akademische Recherche: 148 Quellen, PRISMA-Dossier, PDFs, Snowballing."
-version: 4.0.0
-trigger_keywords:
-  - wissenschaft
-  - recherchieren
-  - Paper suchen
-  - Research
-  - Studie finden
-  - akademisch
-  - Literatur
-  - Dossier
+version: 4.1.0
+author: David Miko, Hermes Agent
+license: MIT
+platforms: [linux, macos]
+metadata:
+  hermes:
+    tags: [wissenschaft, recherche, papers, prisma, dossier, multi-source]
+    related_skills: [sucher-1000, forschungsdossier, grounded-citations]
 ---
 
-# /wissenschaft V4 — Multi-Quellen-Recherche mit PRISMA-Dossier
+# /wissenschaft — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-**148 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
-OpenAlex, PMC, CORE, DOAJ, OpenAIRE, Zenodo, DBLP, HAL, SSRN, CiteSeerX,
-arXiv, bioRxiv, medRxiv, IACR, ChemRxiv, DataCite, INSPIRE-HEP, COD,
-Figshare, PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv,
-ClinicalTrials.gov, UniProt, ChEMBL, NCBI Gene, Ensembl, EBI BioStudies,
-OpenReview, HuggingFace Papers, GitHub, GitLab, PyPI, zbMATH, OEIS,
-Dryad, Wikidata, Open Library, Internet Archive,
-World Bank, NBER, RePEc, CFTC, Redalyc, J-STAGE, CiNii, AJOL,
-PDB, Reactome, Gene Ontology, GBIF, Protein Atlas, DOAB, ORCID, ROR,
-NCBI Nucleotide/Protein/SRA/Assembly/BioProject/BioSample,
-ChEBI, PDBe, ENA, OLS4,
-npm, CRAN, Codeberg, Docker Hub, Maven, Packagist, SciPost,
-WHO ICTRP, Dataverse, Gutenberg, Wikisource, Standard Ebooks, Europeana,
-crates.io, NuGet, RubyGems, Hackage, Go, NIST, RFC, W3C, PubChem,
-OpenCitations, EuDML, CERN CDS, DESY, NCI PDQ, EU-CTR,
-NIH RePORTER, CORDIS, NSF, AlphaFold, MGnify, STRING-DB, iNaturalist,
-DataONE, DSpace@MIT, IETF, ACL Anthology, Bioconductor, SourceForge,
-Wikipedia, Wikimedia, Wikibooks, Wikiversity, OpenEdition, Dialnet,
-MetaboLights, OSF-Projekte + 16 OSF-Preprint-Communities,
-MathOverflow, Mathematics SE, nLab, LMFDB, Cellosaurus, MassIVE,
-NCBI Taxonomy, NIST Atomic Spectra, SIMBAD, NASA Exoplanet Archive,
-USGS Erdbeben, Macrostrat, IAEA Kerndaten,
-PRIDE, InterPro, Expression Atlas, BioModels, KEGG)
-+ 4-Agenten-Pipeline (Researcher → Verifier → Synthesis → Reviewer)
-+ PRISMA-Statistik + Dossier (README + BibTeX + optional PDFs).
-Läuft komplett lokal, ohne API-Keys. Code: `12_Wissenschaft_Tool/` (Git).
+Durchsucht bei EINEM Aufruf **148 key-freie Quellen** (CrossRef, PubMed, Europe
+PMC, Semantic Scholar, OpenAlex, arXiv, bioRxiv, medRxiv, ChemRxiv, Zenodo,
+OpenAIRE, CORE, DOAJ, PDB, UniProt, ChEMBL, GBIF, NCBI- und EBI-Suite,
+MathOverflow, SIMBAD, USGS, KEGG, PRIDE …), dedupliziert, rankt nach Relevanz
+und erzeugt ein **fertiges Dossier** (README + BibTeX + optional PDFs).
 
-## Ablauf
+Pipeline: Researcher → Verifier → Evidence → Synthesis → Cluster → Reviewer →
+PRISMA. Läuft komplett lokal, **ohne API-Keys**.
 
-### 1. Komplett-Recherche (Standard — das ist der Weg)
+Dieser Skill beschreibt BEDIENUNG + Installation, nicht den Bau.
+
+## When to Use
+
+- Nutzer sagt `/wissenschaft <Thema>` oder „recherchier / such Papers / Studien / Literatur zu …"
+- Es wird ein **Dossier** mit Quellen, DOI-Check und PRISMA-Statistik gebraucht
+- Systematische Übersicht statt einzelner Treffer
+
+Don't use for: breite Web-Suche ohne Papers (→ `sucher-1000`) · Bau oder
+Erweiterung des Tools (→ `ERWEITERN.md` im Repo).
+
+## Prerequisites
+
+- **Repo-Pfad ermitteln** (kann umgezogen sein — nie hartkodiert annehmen):
+  `search_files(target='files', pattern='wissenschaft_cli.py')`
+  Übliche Stelle: `~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool`
+- **Einmalig einrichten** (legt venv an und installiert den Slash-Befehl):
+  ```bash
+  cd <repo> && ./setup.sh
+  ```
+- **Immer `.venv/bin/python`** verwenden — mit `python3` läuft nur der
+  2-Quellen-Fallback (CrossRef+arXiv) statt 148.
+- Kein API-Key nötig.
+
+## How to Run
+
 ```bash
-cd ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool
+cd <repo>
 .venv/bin/python wissenschaft_cli.py "THEMA" --dossier --tiefe standard
 ```
-→ Echte Multi-Quellen-Suche → Dedup → Relevanz-Ranking → Verifier (DOI/URL)
-→ Evidence → Synthesis → Reviewer → **fertiges Dossier**.
 
-**Wichtig:** IMMER `.venv/bin/python` nutzen (dort liegen die 148 Quellen).
-Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
+Ergebnis: Dossier-Ordner mit `README.md` (PRISMA, Qualitätstabelle,
+Quellen-Status) und `*_Evidenz.bib`.
+
+**Nicht durch `| head` pipen**, wenn der volle Lauf durchlaufen soll —
+besser in eine Datei umleiten und danach lesen.
 
 ### Tiefe
-- `--tiefe schnell` = 5 Treffer · `standard` = 15 · `tief` = 25 + **Zitations-Snowballing**
 
-### Optionen (alle kombinierbar)
-| Flag | Wirkung |
+| Flag | Treffer |
 |---|---|
-| `--download` | OA-PDFs der Treffer ins Dossier laden (pdf_url + Unpaywall) |
-| `--jahr-von 2020 --jahr-bis 2025` | Zeitraum-Filter |
-| `--quellen "openalex,semantic"` | Delta-Folgelauf: nur fehlende Quellen nachsuchen |
+| `--tiefe schnell` | 5 |
+| `--tiefe standard` | 15 |
+| `--tiefe tief` | 25 + **Zitations-Snowballing** |
 
-### 2. Ergebnis
-Dossier unter `~/HAUPTLAGER/XX_WissenschaftSkill/<THEMA>_Dossier/`:
-- `README.md` — PRISMA-Flowchart, Qualitäts-Tabelle (DOI ✓ / PDF / Zit. / Trust),
-  Quellen-Transparenz („X von 148 aktiv"), Quellen ohne Antwort
-- `*_Evidenz.bib` — BibTeX
-- `pdfs/` — falls `--download`
+## Quick Reference
 
-### 3. Faktencheck
-Bei „prüfe nochmal" → kritische Aussagen gegen die gelisteten Quellen prüfen
-(Trust-Score + DOI-Verifikation stehen in der Dossier-Tabelle).
+```bash
+.venv/bin/python wissenschaft_cli.py "Thema" --dossier             # Standard
+.venv/bin/python wissenschaft_cli.py "Thema" --dossier --download  # + OA-PDFs
+.venv/bin/python wissenschaft_cli.py "Thema" --dossier --tiefe tief
+.venv/bin/python wissenschaft_cli.py "Thema" --jahr-von 2020 --jahr-bis 2025
+.venv/bin/python wissenschaft_cli.py "Thema" --quellen "openalex,semantic"  # Delta
+./check.sh          # Health-Check (venv, Quellen, Tests, Skill-Kette, Backup)
+./nach-update.sh    # nach 'hermes update': reparieren + prüfen
+```
 
-## PITFALLS
+## Procedure
+
+1. **Repo-Pfad finden** (`search_files pattern='wissenschaft_cli.py'`), dann `cd` dorthin.
+2. **Bei Erstnutzung**: `./setup.sh` (venv + Slash-Befehl einrichten).
+3. **Thema präzise formulieren** — Fachbegriffe plus englische Begriffe liefern
+   deutlich bessere Treffer in den internationalen Quellen.
+4. **Tiefe wählen**: `standard` für den Überblick, `tief` mit Snowballing.
+5. **Laufen lassen** — langsame Quellen dürfen arbeiten. Live-Meldungen zeigen,
+   welche Quelle gerade geliefert hat.
+6. **Dossier lesen**: `README.md` (Treffer, Qualität, Quellen-Status) und die
+   `.bib` für die Literaturverwaltung.
+
+## Ergebnis verstehen
+
+Das Dossier enthält neben den Treffern einen **Quellen-Status**:
+
+| Status | Bedeutung |
+|---|---|
+| Treffer | Quelle hat geliefert |
+| ohne Treffer | hat geantwortet, aber nichts zum Thema — **kein Fehler** |
+| offen | rechnete noch (langsamer) — **kein Fehler**, kommt beim nächsten Lauf |
+| Fehler | echte Ausnahme bei der Abfrage |
+
+Bei 148 Spezialquellen ist es **normal**, dass nur ein Teil zum konkreten
+Thema etwas beiträgt.
+
+## Pitfalls
+
 - **Kein venv → nur 2 Quellen** (Fallback). Immer `.venv/bin/python`.
-- **Quellen-Rate-Limits** sind normal (OpenAlex-Budget, Semantic 429):
-  der Searcher überspringt tote Quellen automatisch — Transparenz im Dossier.
-- **Lange Läufe sind ok** (kein Timeout-Abschneiden): lieber vollständig
-  als abgebrochen. Teilwissen steckt im Cache.
+- **Rate-Limits sind normal** (Semantic Scholar 429, OpenAlex-Budget): der
+  Searcher überspringt tote Quellen automatisch, Transparenz steht im Dossier.
+- **Lange Läufe sind gewollt**: lieber vollständig als abgebrochen.
+- **Hardware-/Produktthemen** liefern aus akademischen Quellen wenig —
+  dafür ist `sucher-1000` (Web) das passendere Werkzeug.
 - **google_scholar/BASE/acm/ieee** sind absichtlich NICHT aktiv
   (Bot-Block bzw. Key-Pflicht).
 
-## Update-Schutz (wichtig)
-- Code + Doku liegen in **`12_Wissenschaft_Tool/`** (eigenes Git-Repo, 43+ Commits)
-- Dieser Skill ist zusätzlich **im Repo kopiert**: `skills/wissenschaft/SKILL.md`
-- Backup: `./backup.sh` erzeugt ein Git-Bundle (komplettes Repo in 1 Datei)
-  → wiederherstellbar mit `git clone <bundle>`
-- Bei `hermes update` verloren? → Skill aus dem Repo zurückkopieren:
-  `cp ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool/skills/wissenschaft/SKILL.md \
-      ~/.hermes/skills/research/wissenschaft/SKILL.md`
+## Verification
+
+- Ausgabe enthält `✅ Pipeline: success | N Treffer aus N von 148 Quellen`
+- Dossier-Ordner existiert mit `README.md` + `*_Evidenz.bib`
+- Kein `Traceback` in der Ausgabe
+- `./check.sh` meldet `ERGEBNIS: ✓ alles in Ordnung`
+
+## Update-Schutz
+
+Der Skill liegt als **Symlink** auf dieses Repo — `hermes update` kann ihn
+nicht ersetzen. Nach einem Update: `./nach-update.sh`.
+Details in `SICHERUNG.md`.
