@@ -42,6 +42,34 @@ cd wissenschaft-tool
 Weitere Flags: `--download` (OA-PDFs) · `--jahr-von 2020 --jahr-bis 2025` ·
 `--quellen "openalex,semantic"` (Delta-Folgelauf)
 
+### Zitations-Snowballing (`--tiefe tief`)
+
+Bei `standard` und `schnell` sucht das Tool nur nach Stichworten. Bei `tief`
+kommt ein zweiter Schritt dazu: Es nimmt die drei besten Treffer und holt sich
+deren Nachbarschaft im Zitationsnetz.
+
+**Rückwärts (Referenzen).** Über CrossRef werden die Literaturverweise der
+Top-Treffer geladen. So tauchen die Grundlagenarbeiten auf, die eine Suchmaschine
+über Stichworte nicht findet, weil sie älter sind oder anders benannt wurden.
+
+**Vorwärts (zitiert von).** Über Semantic Scholar wird geladen, wer diese Arbeit
+zitiert hat. Das findet neuere Arbeiten, die auf dem Treffer aufbauen.
+
+Umfang: drei Seeds, je sechs Referenzen und sechs Zitierende. Diese Zusatztreffer
+laufen durch dieselbe Dedup- und Ranking-Stufe wie alles andere.
+
+**Grenzen, ehrlich:**
+- Der Rückwärts-Schritt braucht einen DOI. Treffer ohne DOI (manche Bücher,
+  Konferenzbeiträge) werden übersprungen.
+- Der Vorwärts-Schritt hängt an Semantic Scholar. Die API kennt nicht jedes
+  Paper und drosselt gelegentlich (HTTP 429). Dann kommt für diesen Seed nichts
+  zurück — der Rest des Laufs läuft normal weiter.
+- Beides ist ein Bonus, kein Pflichtteil. Scheitert es, bleibt das Ergebnis
+  vollständig, nur ohne die Zusatztreffer.
+
+Im Dossier erkennt man Snowball-Treffer an der Quelle: `CrossRef-Snowball`
+beziehungsweise `S2-Snowball`.
+
 ## Die wichtigsten Dateien
 
 | Datei | Zweck |

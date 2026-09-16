@@ -67,6 +67,14 @@ besser in eine Datei umleiten und danach lesen.
 | `--tiefe standard` | 15 |
 | `--tiefe tief` | 25 + **Zitations-Snowballing** |
 
+Bei `tief` holt das Tool zusätzlich die Zitationsnachbarschaft der drei besten
+Treffer: rückwärts die Referenzen (CrossRef), vorwärts die zitierenden Arbeiten
+(Semantic Scholar). Das findet Grundlagenwerke und neuere Folgearbeiten, die
+über Stichworte nicht auftauchen. Im Dossier stehen sie als Quelle
+`CrossRef-Snowball` bzw. `S2-Snowball`. Scheitert der Schritt (kein DOI,
+API-Drosselung), bleibt das Ergebnis vollständig — es ist ein Bonus, kein
+Pflichtteil.
+
 ## Quick Reference
 
 ```bash
