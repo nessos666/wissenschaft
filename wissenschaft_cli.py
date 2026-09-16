@@ -54,7 +54,12 @@ def main():
             print(f"  ✗ Pipeline fehlgeschlagen: {result.get('error', '?')}")
             return
         from sources.writer import erstelle_dossier
-        pfade = erstelle_dossier(result, download_pdfs=args.download)
+        try:
+            pfade = erstelle_dossier(result, download_pdfs=args.download)
+        except Exception as e:  # F10: Vertrag 'nie crashen' auch bei Disk/Permission-Fehler
+            print(f"⚠️  Dossier konnte nicht geschrieben werden: {type(e).__name__}: {e}")
+            print("   Die Recherche-Ergebnisse oben bleiben gültig.")
+            pfade = None
         print(f"  ✅ Pipeline: success | "
               f"{len((result.get('researcher') or {}).get('results') or [])} Treffer "
               f"aus {len((result.get('researcher') or {}).get('sources_geliefert') or [])} "
@@ -96,9 +101,9 @@ def main():
         print(json.dumps(result, indent=2, ensure_ascii=False))
         
         # Export wenn Ergebnisse da sind
-        if result.get("synthesis", {}).get("top10_count", 0) > 0:
+        if len(result.get("verifier_detail", [])) > 0:
             from deduplicator import SearchResult
-            verified = result.get("synthesis", {}).get("verified_results", [])
+            verified = result.get("verifier_detail", [])
             papers = []
             for v in verified:
                 papers.append(SearchResult(

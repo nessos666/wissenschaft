@@ -30,9 +30,9 @@
 ├── formatter.py             ← Markdown/BibTeX/RIS/JSON-Export
 ├── cache.py                 ← Response-Cache (24h TTL)
 ├── qdrant_save.py           ← Qdrant-Vektorisierung (optional)
-├── clients/                 ← Direkt-Quellen-Clients
+├── sources/                 ← Direkt-Quellen-Clients
 ├── skills/                  ← Domänen-Wissen (trading/physics/medicine)
-├── tests/                   ← 30 Tests (Standardbibliothek-only)
+├── tests/                   ← 144 Tests (Standardbibliothek-only)
 └── requirements.txt         ← keine Pflicht-Abhängigkeiten
 ```
 
