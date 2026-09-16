@@ -1,5 +1,7 @@
 # /wissenschaft — Multi-Quellen-Recherche mit PRISMA-Dossier
 
+[![skills.sh](https://skills.sh/b/nessos666/wissenschaft)](https://skills.sh/nessos666/wissenschaft)
+
 > **Ein Slash-Command:** `/wissenschaft <Thema>` → durchsucht **148 key-freie
 > Quellen**, erstellt ein fertiges Dossier (README + BibTeX + optional PDFs).
 > Eigenständiges Tool mit eigenem Git — **überlebt jedes `hermes update`**.

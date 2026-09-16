@@ -1,0 +1,11 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Research",
+      "description": "Multi-Quellen-Recherche mit 148 key-freien Quellen, PRISMA-Dossier und Zitations-Snowballing.",
+      "skills": ["wissenschaft"]
+    }
+  ]
+}
