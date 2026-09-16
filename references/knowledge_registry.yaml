@@ -1,3 +1,6 @@
+# HISTORISCH (Stand 22.07.2026) — nur als Referenz aufbewahrt.
+# Die aktive Quellen-Registrierung liegt heute in sources/papersearch.py
+# (148 Quellen, siehe QUELLEN.md). Diese Datei wird nur noch von --plan genutzt.
 # knowledge_registry.yaml V1.0 — 22.07.2026
 # 30+ wissenschaftliche Quellen, 4 Tiers, Domain-Routing
 # Genutzt von source_router.py im /wissenschaft Pipeline

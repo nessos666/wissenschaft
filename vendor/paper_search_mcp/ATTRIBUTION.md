@@ -16,3 +16,5 @@
 
 - `academic_platforms/sci_hub.py` (+ Test): Sci-Hub-Downloader wurde entfernt —
   rechtlich heikel und im Projekt nirgends verwendet.
+
+- `academic_platforms/google_scholar.py`: entfernt — Google Scholar blockt Bots, nicht nutzbar.
