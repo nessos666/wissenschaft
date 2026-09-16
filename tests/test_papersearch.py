@@ -222,3 +222,25 @@ def test_ziel_130_quellen_erreicht():
     """Davids Ziel: mindestens 130 Quellen."""
     assert len(papersearch.ALL_SOURCES) >= 130, \
         f"nur {len(papersearch.ALL_SOURCES)} Quellen"
+
+
+# ---------- Runde 8: Naturwissenschaften (Mathe/Bio/Chemie/Physik/Geo) ----------
+
+def test_runde8_naturwissenschaften():
+    neue = {"mathoverflow", "math_se", "nlab", "lmfdb", "cellosaurus",
+            "massive", "ncbi_taxonomy", "nist_asd", "simbad", "exoplanet",
+            "usgs_quake", "macrostrat", "iaea", "nndc"}
+    assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
+        f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
+
+
+def test_runde8_geparkte_quellen_nicht_aktiv():
+    """Die 9 SPA/toten Endpoints dürfen NICHT in der aktiven Pipeline sein."""
+    from sources.quellen_extra8 import EXTRA_QUELLEN_8_OFFEN
+    assert len(EXTRA_QUELLEN_8_OFFEN) == 9
+    for name in EXTRA_QUELLEN_8_OFFEN:
+        assert name not in papersearch.SEARCHER_MAP, f"{name} fälschlich aktiv"
+
+
+def test_quellen_ziel_130_uebertroffen():
+    assert len(papersearch.ALL_SOURCES) >= 140
