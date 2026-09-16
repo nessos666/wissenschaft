@@ -27,6 +27,7 @@ Weitere Flags: `--download` (OA-PDFs) · `--jahr-von 2020 --jahr-bis 2025` ·
 | Datei | Zweck |
 |---|---|
 | **`check.sh`** | **Health-Check — prüft alles mit einem Befehl** |
+| **`nach-update.sh`** | **nach `hermes update` ausführen — repariert + prüft** |
 | `install.sh` | Skill update-fest machen (Symlink ins Repo) |
 | `sync-skill.sh` | prüft/repariert die Skill-Kette (nach Updates) |
 | `backup.sh` | Git-Bundle erzeugen (komplettes Repo in 1 Datei) |

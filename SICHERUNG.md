@@ -27,11 +27,34 @@ der Skill ist damit Teil des Git-Repos, versioniert und update-fest.
 
 ```bash
 cd ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool
-./check.sh
+./nach-update.sh
 ```
 
-Prüft in einem Lauf: venv · 149 Quellen · Tests · Skill-Kette · CLI-Start ·
-Backup · Git-Status. Exit-Code 1 bei Problemen.
+Das repariert automatisch, was ein Update kaputtmachen kann:
+1. Skill-Symlink weg? → wiederherstellen (`install.sh`)
+2. Skill ist eine Kopie statt Symlink? → update-fest machen
+3. venv fehlt? → neu anlegen + Requirements installieren
+4. Danach läuft der komplette Health-Check (`./check.sh`)
+
+**Nur prüfen** (ohne Reparatur): `./check.sh`
+Prüft: venv · 148 Quellen · Tests · Skill-Kette · CLI-Start · Backup · Git-Status.
+Exit-Code 1 bei Problemen.
+
+### Automatik (optional, nicht aktiv)
+
+Ein Cronjob ist **bewusst nicht eingerichtet** (Davids Cron-System bleibt unangetastet).
+Auf Wunsch aktivierbar mit:
+
+```bash
+hermes cron create "10 10 * * *" \
+  --name "Wissenschaft-Check" \
+  --script check.sh \
+  --workdir "$HOME/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool" \
+  --no-agent --deliver telegram
+```
+
+Meldet dann täglich um 10:10 nur, wenn etwas nicht stimmt. Entfernen mit
+`hermes cron remove <id>` (ID aus `hermes cron list`).
 
 ## Wiederherstellen
 
