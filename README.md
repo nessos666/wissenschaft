@@ -127,3 +127,11 @@ ist eigenständig.
 
 Dossiers (`*_Dossier/`, `Dossiers/`) sind in `.gitignore` — sie enthalten
 Recherche-Ergebnisse, keinen Code.
+
+---
+
+## Verwandte Tools
+
+🔬 **Search the web too** → [SUCHER-1000](https://github.com/nessos666/sucher-1000) · 🧠 **Keep what you learn** → [Extraktor](https://github.com/nessos666/extraktor)
+
+Alle drei sind key-frei und laufen lokal.
