@@ -24,6 +24,6 @@ mcp.settings.port = 8100
 mcp.settings.log_level = "INFO"
 
 if __name__ == "__main__":
-    print("🔬 /wissenschaft paper-search MCP Server auf 0.0.0.0:8100")
+    print(f"🔬 /wissenschaft paper-search MCP Server auf {mcp.settings.host}:{mcp.settings.port}")
     print("   21 Quellen (CrossRef, PubMed, Europe PMC, Semantic Scholar, …)")
     mcp.run(transport="streamable-http")

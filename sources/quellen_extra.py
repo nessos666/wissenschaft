@@ -14,8 +14,8 @@ import re
 import requests
 
 TIMEOUT = 25
-MAIL = "kontakt@wissenshaft.tool"
-HEADERS = {"User-Agent": "WissenschaftTool/4.0 (+https://github.com/nessos666; mailto:kontakt@wissenshaft.tool)"}
+MAIL = "wissenschaft-tool@example.org"
+HEADERS = {"User-Agent": "WissenschaftTool/4.0 (+https://github.com/nessos666; mailto:wissenschaft-tool@example.org)"}
 
 
 def _clean_year(text) -> str:

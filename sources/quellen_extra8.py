@@ -17,7 +17,7 @@ from urllib.parse import quote
 import requests
 
 TIMEOUT = 12
-HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) WissenschaftTool/4.0 (mailto:kontakt@wissenshaft.tool)"}
+HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) WissenschaftTool/4.0 (mailto:wissenschaft-tool@example.org)"}
 
 
 def _jahr(t):

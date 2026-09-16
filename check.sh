@@ -9,7 +9,7 @@ echo "════════════════════════�
 echo " /wissenschaft — HEALTH-CHECK"
 echo "══════════════════════════════════════════"
 
-# 1 — venv (ohne = nur 2 statt 149 Quellen)
+# 1 — venv (ohne = nur 2 statt 148 Quellen)
 echo
 if [ -x .venv/bin/python ]; then
     echo "✓ venv .............. .venv/bin/python vorhanden"

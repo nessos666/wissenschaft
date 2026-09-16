@@ -11,3 +11,8 @@
   sources/papersearch.py nutzt die Connectors DIREKT, ohne fastmcp)
 - **Änderungen:** keine am Original-Code; nur Auswahl der aktiven Quellen
   in sources/papersearch.py (Qualitäts-Priorität: kuratierte zuerst)
+
+## Entfernte Komponenten
+
+- `academic_platforms/sci_hub.py` (+ Test): Sci-Hub-Downloader wurde entfernt —
+  rechtlich heikel und im Projekt nirgends verwendet.

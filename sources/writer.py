@@ -130,7 +130,7 @@ def _offene_quellen_markdown(pipeline_ergebnis: dict) -> str:
     if ohne:
         aus.append(f"\n**{len(ohne)} Quellen hatten zu diesem Thema nichts** — "
                    f"sie wurden gefragt und haben geantwortet, nur ohne "
-                   f"passenden Treffer (bei 149 Spezialquellen völlig normal):\n")
+                   f"passenden Treffer (bei über 140 Spezialquellen völlig normal):\n")
         aus.append(", ".join(f"`{q}`" for q in sorted(ohne)) + "\n")
     return "\n".join(aus)
 

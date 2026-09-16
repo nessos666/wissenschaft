@@ -3,7 +3,7 @@
 #
 # Für Dritte: klont das Repo (oder entpackt es), dann dieses Skript aufrufen.
 #
-#   git clone <repo-url> wissenschaft-tool
+#   git clone https://github.com/nessos666/wissenschaft.git
 #   cd wissenschaft-tool
 #   ./setup.sh
 #

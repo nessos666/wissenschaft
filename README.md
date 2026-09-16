@@ -9,7 +9,7 @@
 ## Installation (3 Befehle)
 
 ```bash
-git clone <repo-url> wissenschaft-tool
+git clone https://github.com/nessos666/wissenschaft.git wissenschaft-tool
 cd wissenschaft-tool
 ./setup.sh
 ```

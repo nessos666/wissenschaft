@@ -13,7 +13,7 @@ import re
 import requests
 
 TIMEOUT = 25
-HEADERS = {"User-Agent": "WissenschaftTool/4.0 (+https://github.com/nessos666; mailto:kontakt@wissenshaft.tool)"}
+HEADERS = {"User-Agent": "WissenschaftTool/4.0 (+https://github.com/nessos666; mailto:wissenschaft-tool@example.org)"}
 
 
 def _jahr(text) -> str:
