@@ -2,8 +2,9 @@
 Interaktionen, Ökologie, Technik, Wikimedia). Live verifiziert 2026-09.
 
   FÖRDERUNG  : NIH RePORTER, CORDIS (EU), NSF Awards
-  EBI-2      : PRIDE (Proteomik), InterPro, Expression Atlas, BioModels,
-               KEGG, AlphaFold DB, MGnify (Mikrobiom)
+  EBI-2      : AlphaFold DB, MGnify (Mikrobiom)
+               [PRIDE, InterPro, Expression Atlas, BioModels, KEGG sind in
+                quellen_extra9.py implementiert — siehe F2 im Review]
   INTERAKTION: STRING-DB (Protein-Netzwerke)
   ÖKOLOGIE   : iNaturalist, DataONE, DSpace@MIT
   TECHNIK    : IETF Datatracker, ACL Anthology, Bioconductor, SourceForge

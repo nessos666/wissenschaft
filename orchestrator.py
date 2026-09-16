@@ -55,7 +55,7 @@ class OrchestratorV3:
                                      "domain": domain,
                                      "nur_quellen": nur_quellen})
             if not r.success:
-                return {"error": "Researcher fehlgeschlagen", "details": r.errors}
+                return {"pipeline_success": False, "error": "Researcher fehlgeschlagen", "details": r.errors}
         
         # Block 2: Researcher liefert echte Treffer (search_performed=True).
         # Wenn KEINE externen raw_results gegeben sind, nutze die internen.

@@ -30,8 +30,8 @@ def _safe(fn):
     return wrapper
 
 
-def _e(titel, url, source, jahr="", abstract="", authors="", zitate=0):
-    return {"title": (titel or "")[:500], "year": jahr, "doi": "", "url": url or "",
+def _e(titel, url, source, jahr="", abstract="", authors="", zitate=0, doi=""):
+    return {"title": (titel or "")[:500], "year": jahr, "doi": doi, "url": url or "",
             "pdf_url": "", "source": source, "citations": zitate,
             "abstract": (abstract or "")[:800], "authors": (authors or "")[:300]}
 
@@ -247,6 +247,8 @@ def suche_europeana(query, max_results=5):
     return out[:max_results]
 
 
+# F3: who_ictrp geparkt — lieferte Immer-Treffer ohne echte Query-Filterung
+# ("who_ictrp": suche_who_ictrp,)
 EXTRA_QUELLEN_5 = {
     "npm": suche_npm, "cran": suche_cran, "codeberg": suche_codeberg,
     "dockerhub": suche_dockerhub, "maven": suche_maven, "packagist": suche_packagist,

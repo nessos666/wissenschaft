@@ -163,7 +163,9 @@ def deduplicate(results: list[SearchResult]) -> list[SearchResult]:
                     # (Felder von u übernehmen wo r leer ist)
                     _merge_duplikat(r, u)
                     unique[unique.index(u)] = r
-                    seen_dois[r.doi] = r
+                    seen_dois.pop(u.doi, None)  # F4: verwaiste Preprint-DOI entfernen
+                    if r.doi:
+                        seen_dois[r.doi] = r
                 else:
                     # r ist Preprint (oder gleichrangig) → in u mergen
                     _merge_duplikat(u, r)

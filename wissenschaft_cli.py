@@ -77,8 +77,15 @@ def main():
 
     if args.orchestrate and args.input:
         # 4-Agent-Pipeline
-        with open(args.input) as f:
-            data = json.load(f)
+        try:
+            with open(args.input) as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print(f"❌ Eingabedatei nicht gefunden: {args.input}")
+            return 1
+        except json.JSONDecodeError as e:
+            print(f"❌ Ungültiges JSON in {args.input}: {e}")
+            return 1
         
         orch = Orchestrator()
         result = orch.run_pipeline(

@@ -25,6 +25,10 @@ class ResponseCache:
         self._init_db()
     
     def _init_db(self):
+        from pathlib import Path as _P
+        _p = _P(self.db)
+        if _p.parent and str(_p.parent) not in (".", ""):
+            _p.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.db) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS cache (

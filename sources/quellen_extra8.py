@@ -409,7 +409,7 @@ EXTRA_QUELLEN_8 = {
     "simbad": suche_simbad, "exoplanet": suche_exoplanet,
     # Geowissenschaft / Nuklear
     "usgs_quake": suche_usgs_quake, "macrostrat": suche_macrostrat,
-    "iaea": suche_iaea_nuclear, "nndc": suche_nndc,
+    "iaea": suche_iaea_nuclear,
 }
 
 # ── GEPARKT (9): Endpoint liefert JS-SPA oder toten REST-Pfad.
@@ -425,6 +425,7 @@ EXTRA_QUELLEN_8_OFFEN = {
     "bindingdb": suche_bindingdb,            # REST-Pfad tot
     "sabiork": suche_sabiork,                # SPA
     "zinc": suche_zinc,                      # HTML ohne IDs
+    "nndc": suche_nndc,                      # F3: Immer-Treffer ohne echte Suche
 }
 
 if __name__ == "__main__":

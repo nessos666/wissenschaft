@@ -8,6 +8,7 @@ Damit kann auch Hermes selbst die 21 Quellen über search_papers-Tools nutzen.
 Start:  .venv/bin/python mcp_server.py
 Stop:   Ctrl-C (oder process kill)
 """
+import os
 import sys
 from pathlib import Path
 
@@ -18,7 +19,7 @@ if str(VENDOR) not in sys.path:
 
 from paper_search_mcp.server import mcp  # noqa: E402
 
-mcp.settings.host = "0.0.0.0"
+mcp.settings.host = os.environ.get("WISSENSCHAFT_MCP_HOST", "127.0.0.1")
 mcp.settings.port = 8100
 mcp.settings.log_level = "INFO"
 

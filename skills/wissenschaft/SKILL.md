@@ -1,6 +1,6 @@
 ---
 name: wissenschaft
-description: "Akademische Recherche: 145 Quellen, PRISMA-Dossier, PDFs, Snowballing."
+description: "Akademische Recherche: 149 Quellen, PRISMA-Dossier, PDFs, Snowballing."
 version: 4.0.0
 trigger_keywords:
   - wissenschaft
@@ -15,7 +15,7 @@ trigger_keywords:
 
 # /wissenschaft V4 — Multi-Quellen-Recherche mit PRISMA-Dossier
 
-**145 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
+**149 key-freie Quellen** (CrossRef, PubMed, Europe PMC, Semantic Scholar,
 OpenAlex, PMC, CORE, DOAJ, OpenAIRE, Zenodo, DBLP, HAL, SSRN, CiteSeerX,
 arXiv, bioRxiv, medRxiv, IACR, ChemRxiv, DataCite, INSPIRE-HEP, COD,
 Figshare, PsyArXiv, engrXiv, EarthArXiv, SocArXiv, AfricArXiv,
@@ -36,7 +36,8 @@ Wikipedia, Wikimedia, Wikibooks, Wikiversity, OpenEdition, Dialnet,
 MetaboLights, OSF-Projekte + 16 OSF-Preprint-Communities,
 MathOverflow, Mathematics SE, nLab, LMFDB, Cellosaurus, MassIVE,
 NCBI Taxonomy, NIST Atomic Spectra, SIMBAD, NASA Exoplanet Archive,
-USGS Erdbeben, Macrostrat, IAEA Kerndaten, NNDC NuDat)
+USGS Erdbeben, Macrostrat, IAEA Kerndaten,
+PRIDE, InterPro, Expression Atlas, BioModels, KEGG)
 + 4-Agenten-Pipeline (Researcher → Verifier → Synthesis → Reviewer)
 + PRISMA-Statistik + Dossier (README + BibTeX + optional PDFs).
 Läuft komplett lokal, ohne API-Keys. Code: `12_Wissenschaft_Tool/` (Git).
@@ -51,7 +52,7 @@ cd ~/HAUPTLAGER/03_PROJEKTE/12_Wissenschaft_Tool
 → Echte Multi-Quellen-Suche → Dedup → Relevanz-Ranking → Verifier (DOI/URL)
 → Evidence → Synthesis → Reviewer → **fertiges Dossier**.
 
-**Wichtig:** IMMER `.venv/bin/python` nutzen (dort liegen die 145 Quellen).
+**Wichtig:** IMMER `.venv/bin/python` nutzen (dort liegen die 149 Quellen).
 Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
 
 ### Tiefe
@@ -67,7 +68,7 @@ Mit `python3` läuft nur der 2-Quellen-Fallback (CrossRef+arXiv).
 ### 2. Ergebnis
 Dossier unter `~/HAUPTLAGER/XX_WissenschaftSkill/<THEMA>_Dossier/`:
 - `README.md` — PRISMA-Flowchart, Qualitäts-Tabelle (DOI ✓ / PDF / Zit. / Trust),
-  Quellen-Transparenz („X von 145 aktiv"), Quellen ohne Antwort
+  Quellen-Transparenz („X von 149 aktiv"), Quellen ohne Antwort
 - `*_Evidenz.bib` — BibTeX
 - `pdfs/` — falls `--download`
 
@@ -85,7 +86,7 @@ Bei „prüfe nochmal" → kritische Aussagen gegen die gelisteten Quellen prüf
   (Bot-Block bzw. Key-Pflicht).
 
 ## Update-Schutz (wichtig)
-- Code + Doku liegen in **`12_Wissenschaft_Tool/`** (eigenes Git-Repo, 32+ Commits)
+- Code + Doku liegen in **`12_Wissenschaft_Tool/`** (eigenes Git-Repo, 43+ Commits)
 - Dieser Skill ist zusätzlich **im Repo kopiert**: `skills/wissenschaft/SKILL.md`
 - Backup: `./backup.sh` erzeugt ein Git-Bundle (komplettes Repo in 1 Datei)
   → wiederherstellbar mit `git clone <bundle>`

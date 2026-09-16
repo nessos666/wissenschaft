@@ -229,15 +229,15 @@ def test_ziel_130_quellen_erreicht():
 def test_runde8_naturwissenschaften():
     neue = {"mathoverflow", "math_se", "nlab", "lmfdb", "cellosaurus",
             "massive", "ncbi_taxonomy", "nist_asd", "simbad", "exoplanet",
-            "usgs_quake", "macrostrat", "iaea", "nndc"}
+            "usgs_quake", "macrostrat", "iaea"}
     assert neue.issubset(set(papersearch.SEARCHER_MAP)), \
         f"fehlen: {neue - set(papersearch.SEARCHER_MAP)}"
 
 
 def test_runde8_geparkte_quellen_nicht_aktiv():
-    """Die 9 SPA/toten Endpoints dürfen NICHT in der aktiven Pipeline sein."""
+    """Die SPA/toten Endpoints dürfen NICHT in der aktiven Pipeline sein."""
     from sources.quellen_extra8 import EXTRA_QUELLEN_8_OFFEN
-    assert len(EXTRA_QUELLEN_8_OFFEN) == 9
+    assert len(EXTRA_QUELLEN_8_OFFEN) == 10  # 9 SPA + nndc (F3)
     for name in EXTRA_QUELLEN_8_OFFEN:
         assert name not in papersearch.SEARCHER_MAP, f"{name} fälschlich aktiv"
 

@@ -163,7 +163,8 @@ class Verifier:
                 # Budget erschöpft — Rest schnell abfertigen (kein Live-Check)
                 vr = VerifiedResult(result=r, check_details={})
                 if r.doi:
-                    vr.doi_verified = True  # DOI-Format valide — optimistisch
+                    vr.doi_verified = False  # F7: NICHT geprüft ≠ verifiziert
+                    vr.warnings.append("DOI nicht live geprüft (Budget erschöpft)")
                 else:
                     vr.warnings.append("Budget erschöpft — DOI nicht geprüft")
                 if not (r.url or r.pdf_url):

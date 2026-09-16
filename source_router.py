@@ -12,6 +12,8 @@ class RoutedSource:
     access_mode: str = "api"; mcp_tool: str = ""; score: float = 0.0
 
 def route_sources(query_domain: str, depth: str = "standard") -> list[RoutedSource]:
+    if not REGISTRY_PATH.exists():
+        return []
     with open(REGISTRY_PATH) as f:
         reg = yaml.safe_load(f)
     

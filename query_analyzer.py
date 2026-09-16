@@ -76,7 +76,7 @@ def parse_boolean(query: str) -> tuple[str, list[str]]:
     
     # Entferne NOT-Terme für die eigentliche Suche
     clean = re.sub(r'\bNOT\s+\w+(?:\s+\w+)*?(?=\s+(?:AND|OR|$)|\s*$)', '', clean, flags=re.IGNORECASE)
-    clean = re.sub(r'-\s*\w+', '', clean)
+    clean = re.sub(r'(?<!\w)-\s*\w+', '', clean)
     
     # Erkenne Struktur
     has_or = bool(re.search(r'\bOR\b', clean, re.IGNORECASE))
