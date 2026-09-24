@@ -8,7 +8,7 @@ platforms: [linux, macos]
 metadata:
   hermes:
     tags: [wissenschaft, recherche, papers, prisma, dossier, multi-source]
-    related_skills: [sucher-1000, forschungsdossier, grounded-citations]
+    related_skills: [sucher-1000, forschungs-dossier, grounded-citations]
 ---
 
 # /wissenschaft — Multi-Quellen-Recherche mit PRISMA-Dossier
